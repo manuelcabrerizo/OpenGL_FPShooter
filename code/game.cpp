@@ -97,10 +97,23 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
 
     glBindVertexArray(game->pistol.vao);
     glBindTexture(GL_TEXTURE_2D, game->pistol.texId);
-    Matrix pistoRot = get_rotation_y_matrix(-to_radiant(game->camera.yaw + 180.0f)) *
-                      get_rotation_arbitrary_matrix(game->camera.right, to_radiant(game->camera.pitch));
-    Matrix pistolPos = pistoRot * get_translation_matrix(game->camera.position + (game->camera.target));
-    SetShaderMatrix(pistolPos, game->mesh_shader.worldMatLoc);
+   
+
+    Vec3 pistolPositionOffset = {0.0f, 0.0f, 0.0f};
+    pistolPositionOffset.x = 1.0f * -sinf(to_radiant(game->camera.yaw));
+    pistolPositionOffset.z = 1.0f * cosf(to_radiant(game->camera.yaw));
+    Vec3 pistolPosition;
+    pistolPosition.x = game->camera.position.x + game->camera.target.x + pistolPositionOffset.x;
+    pistolPosition.z = game->camera.position.z + game->camera.target.z + pistolPositionOffset.z;
+    pistolPosition.y = game->camera.position.y + game->camera.target.y;
+
+    Matrix pistolPos = get_translation_matrix(pistolPosition);
+    Matrix pistolRot = get_rotation_y_matrix(-to_radiant(game->camera.yaw + 180.0f)) *
+                       get_rotation_arbitrary_matrix(game->camera.right, to_radiant(game->camera.pitch));
+    Matrix pistolModel = pistolRot * pistolPos;
+
+
+    SetShaderMatrix(pistolModel, game->mesh_shader.worldMatLoc);
     glDrawElements(GL_TRIANGLES, game->pistol.numIndex * 3, GL_UNSIGNED_INT, 0);
 
     glBindVertexArray(game->ball.vao);
@@ -110,7 +123,7 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     static int actualProjectile   = 0;
     if(GetMouseButtonPress(&game->input, LEFTBUTTON) && mouseLButtonPress == false)
     {
-        ShootProjectile(&game->projectile[actualProjectile], game->camera.position, game->camera.position + (game->camera.target * 10.0f));
+        ShootProjectile(&game->projectile[actualProjectile], pistolPosition, game->camera.position + (game->camera.target * 10.0f));
         mouseLButtonPress = true;
         actualProjectile++;
     }
