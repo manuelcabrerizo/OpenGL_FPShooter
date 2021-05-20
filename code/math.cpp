@@ -355,4 +355,15 @@ Vec3 PerpZVec3(Vec3 v)
 }
 
 
+Vec3 operator*(const Matrix& m, const Vec3& v)
+{
+    Vec3 result;
+    result.x = (m.m[0][0] * v.x) + (m.m[0][1] * v.y) + (m.m[0][2] * v.z) + (m.m[0][3]);
+    result.y = (m.m[1][0] * v.x) + (m.m[1][1] * v.y) + (m.m[1][2] * v.z) + (m.m[1][3]);
+    result.z = (m.m[2][0] * v.x) + (m.m[2][1] * v.y) + (m.m[2][2] * v.z) + (m.m[2][3]); 
+    result.z = (m.m[3][0] * v.x) + (m.m[3][1] * v.y) + (m.m[3][2] * v.z) + (m.m[3][3]);
+    return result;
+}
+
+
 

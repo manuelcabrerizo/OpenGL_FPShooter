@@ -34,19 +34,30 @@ void UpdateCamera(Camera* camera, Input* input, float deltaTime)
     if(GetKeyDown(input, 'W'))
     {
         camera->position +=  (camera->front * 2.0f) * deltaTime;
+        camera->isMoving = true;
     }
     if(GetKeyDown(input, 'S'))
     {
         camera->position -= (camera->front * 2.0f) * deltaTime;
+        camera->isMoving = true;
     }
     if(GetKeyDown(input, 'A'))
     {
         camera->position += (camera->right * 2.0f) * deltaTime;
+        camera->isMoving = true;
     }
     if(GetKeyDown(input, 'D'))
     {
         camera->position -= (camera->right * 2.0f) * deltaTime;
+        camera->isMoving = true;
     }
+
+    if(!GetKeyDown(input, 'W') && !GetKeyDown(input, 'S') && !GetKeyDown(input, 'A') && !GetKeyDown(input, 'D'))
+    {
+        camera->isMoving = false;
+    }
+
+
     if(GetKeyDown(input, 0x10))  // check SHIFT is down
     {
         camera->position += (camera->up * 2.0f)    * deltaTime;

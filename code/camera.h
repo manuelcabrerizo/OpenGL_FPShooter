@@ -9,6 +9,7 @@
 
 struct Camera
 {
+    bool isMoving;
     Vec3 position;
     Vec3 right;
     Vec3 target;
