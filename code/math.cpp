@@ -279,16 +279,6 @@ Matrix get_rotation_x_matrix(float angle)
     return result;
 }
 
-Vec3 vec3_rotate_arbitrary_axis(Vec3 n, Vec3 v, float a)
-{
-    Vec3 result;
-        result.x = (v.x * powf(n.x, 2)*(1.0f-cosf(a))+cosf(a)) + (v.y * n.x*n.y*(1.0f-cosf(a))+n.z*sinf(a)) + (v.z * n.x*n.z*(1.0f-cosf(a))-n.y*sinf(a));
-        result.y = (v.x * n.x*n.y*(1.0f-cosf(a))-n.z*sinf(a)) + (v.y * powf(n.y, 2)*(1.0f-cosf(a))+cosf(a)) + (v.z * n.y*n.z*(1.0f-cosf(a))+n.x*sinf(a));
-        result.z = (v.x * n.x*n.z*(1.0f-cosf(a))+n.y*sinf(a)) + (v.y * n.y*n.z*(1.0f-cosf(a))-n.x*sinf(a)) + (v.z * powf(n.z, 2)*(1.0f-cosf(a))+cosf(a));
-    return result;
-}
-
-
 Matrix get_rotation_y_matrix(float angle)
 {
     Matrix result = {{

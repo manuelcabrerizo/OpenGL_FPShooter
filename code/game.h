@@ -23,6 +23,13 @@ struct Projectile
     float distance;
 };
 
+struct Enemy
+{
+    AABB collider;
+    Vec3 position;
+    Mesh colliderMesh;
+};
+
 struct UI
 {
     Line xAxis;
@@ -42,9 +49,13 @@ struct MainGame
     Line yAxis;
     Line zAxis;
     
+    Mesh naruto;
+    Enemy enemy;
+
     Mesh pistol;
     Mesh ball;
     Projectile projectile[200];
+    AABB     projCollider[200];
 };
 
 void GameInit(MainGame* game);
