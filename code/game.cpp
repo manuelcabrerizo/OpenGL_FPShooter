@@ -35,7 +35,7 @@ void GameInit(MainGame* game)
     game->zAxis = GenLine({0.0f, 0.0f, -100.0f}, {0.0f, 0.0f, 100.0f}, {0.0f, 0.0f, 1.0f}, &game->main_shader); 
     
     GenerateTerrain(&game->terrain, -10, -10, 20, 20, 1, "./data/terrain.bmp");
-    LoadOBJFileIndex(&game->pistol, "./data/weapon.obj", "./data/pistol.bmp");
+    LoadOBJFileIndex(&game->pistol, "./data/weapon.obj", "./data/weapon.bmp");
     LoadOBJFileIndex(&game->ball, "./data/bullet.obj", "./data/bullet.bmp");
     LoadOBJFileIndex(&game->naruto, "./data/naruto.obj", "./data/naruto.bmp");
     LoadOBJFileIndex(&game->enemy.colliderMesh, "./data/collider.obj", "./data/pistol.bmp");
@@ -53,7 +53,7 @@ void GameInit(MainGame* game)
     }
 
     // ENEMY::STAFF...
-    game->enemy.position = {10.0f, 0.0f, 10.0f};
+    game->enemy.position = {5.0f, 0.0f, 3.0f};
     game->enemy.collider.c = {game->enemy.position.x,
                               game->enemy.position.y + 0.8f,
                               game->enemy.position.z};
@@ -107,6 +107,14 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     glBindVertexArray(game->naruto.vao);
     SetShaderMatrix(model, game->mesh_shader.worldMatLoc);
     glDrawElements(GL_TRIANGLES, game->naruto.numIndex * 3, GL_UNSIGNED_INT, 0);
+
+    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
+    glBindVertexArray(game->enemy.colliderMesh.vao);
+    glBindTexture(GL_TEXTURE_2D, game->enemy.colliderMesh.texId);
+    model = get_scale_matrix({0.2f, 0.8f, 0.2f}) * get_translation_matrix(game->enemy.collider.c);
+    SetShaderMatrix(model, game->mesh_shader.worldMatLoc);
+    glDrawElements(GL_TRIANGLES, game->enemy.colliderMesh.numIndex * 3, GL_UNSIGNED_INT, 0);
+    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);
     
     model = get_identity_matrix();
     glBindTexture(GL_TEXTURE_2D, game->terrain.texId);
@@ -124,7 +132,7 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     if(game->camera.isMoving == true)
     {  
         static float time = 0.0f;
-        pistolFinalPos.y = pistolFinalPos.y + sinf(time) / 40.0f;
+        pistolFinalPos.y = pistolFinalPos.y + sinf(time) / 50.0f;
         time += deltaTime * 15.0f;
     } 
     
@@ -153,6 +161,8 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
         mouseLButtonPress = false;
     }
     actualProjectile %= 200;
+
+
     for(int i = 0 ; i < 200; i++)
     {
         Matrix projectileModel = get_scale_matrix({0.01f, 0.01f, 0.01f}) * UpdateProjectile(&game->projectile[i], deltaTime);
@@ -163,7 +173,17 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
             glBindTexture(GL_TEXTURE_2D, game->ball.texId);
             SetShaderMatrix(projectileModel, game->mesh_shader.worldMatLoc);
             glDrawElements(GL_TRIANGLES, game->ball.numIndex * 3, GL_UNSIGNED_INT, 0);
+
+            glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
+            glBindVertexArray(game->enemy.colliderMesh.vao);
+            glBindTexture(GL_TEXTURE_2D, game->enemy.colliderMesh.texId);
+            projectileModel = get_scale_matrix({0.01f, 0.01f, 0.01f}) * get_translation_matrix(game->projCollider[i].c);
+            SetShaderMatrix(projectileModel, game->mesh_shader.worldMatLoc);
+            glDrawElements(GL_TRIANGLES, game->enemy.colliderMesh.numIndex * 3, GL_UNSIGNED_INT, 0);
+            glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);
         }
+
+
 
         if(TestAABBAABB(game->projCollider[i], game->enemy.collider) == 1)
         {
