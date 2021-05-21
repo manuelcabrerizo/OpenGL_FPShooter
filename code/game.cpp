@@ -34,12 +34,29 @@ void GameInit(MainGame* game)
     game->yAxis = GenLine({0.0f, -100.0f, 0.0f}, {0.0f, 100.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, &game->main_shader);
     game->zAxis = GenLine({0.0f, 0.0f, -100.0f}, {0.0f, 0.0f, 100.0f}, {0.0f, 0.0f, 1.0f}, &game->main_shader); 
     
-    GenerateTerrain(&game->terrain, -10, -10, 20, 20, 1, "./data/terrain.bmp");
+    GenerateTerrain(&game->terrain, -25, -25, 50, 50, 1, "./data/terrain.bmp");
     LoadOBJFileIndex(&game->pistol, "./data/weapon.obj", "./data/weapon.bmp");
     LoadOBJFileIndex(&game->ball, "./data/bullet.obj", "./data/bullet.bmp");
     LoadOBJFileIndex(&game->naruto, "./data/naruto.obj", "./data/naruto.bmp");
-    LoadOBJFileIndex(&game->enemy.colliderMesh, "./data/collider.obj", "./data/pistol.bmp");
+    LoadOBJFileIndex(&game->colliderMesh, "./data/collider.obj", "./data/pistol.bmp");
 
+
+    game->buildings[0].position = {10.0f, 1.0f, 10.0f};
+    game->buildings[1].position = {-10.0f, 1.0f, -7.0f};
+    game->buildings[2].position = {-2.0f, 1.0f, 15.0f};
+    game->buildings[3].position = {-16.0f, 1.0f, 9.0f};
+    game->buildings[0].scale = {4.0f, 1.0f, 2.0f};
+    game->buildings[1].scale = {6.0f, 3.0f, 4.0f};
+    game->buildings[2].scale = {6.0f, 2.0f, 6.0f};
+    game->buildings[3].scale = {5.0f, 4.0f, 2.0f};
+    for(int i = 0; i < 4; i++)
+    {
+        game->buildings[i].collider.c = game->buildings[i].position;
+        game->buildings[i].collider.r[0] = game->buildings[i].scale.x; 
+        game->buildings[i].collider.r[1] = game->buildings[i].scale.y;
+        game->buildings[i].collider.r[2] = game->buildings[i].scale.z;
+    }
+    
     for(int i = 0; i < 200; i++)
     {
         game->projectile[i].start    = {0.0f, 0.0f, 0.0f};
@@ -47,19 +64,28 @@ void GameInit(MainGame* game)
         game->projectile[i].end      = {0.0f, 0.0f, 0.0f};
         game->projectile[i].speed    = 2.0f;
         game->projCollider[i].c = game->projectile[i].position;
-        game->projCollider[i].r[0] = 0.01f;
-        game->projCollider[i].r[1] = 0.01f;
-        game->projCollider[i].r[2] = 0.01f;
+        game->projCollider[i].r[0] = 0.02f;
+        game->projCollider[i].r[1] = 0.02f;
+        game->projCollider[i].r[2] = 0.02f;
+        game->projectile[i].impactSomething = false;
     }
 
     // ENEMY::STAFF...
-    game->enemy.position = {5.0f, 0.0f, 3.0f};
-    game->enemy.collider.c = {game->enemy.position.x,
-                              game->enemy.position.y + 0.8f,
-                              game->enemy.position.z};
-    game->enemy.collider.r[0] = 0.2f; 
-    game->enemy.collider.r[1] = 0.8f;
-    game->enemy.collider.r[2] = 0.2f;
+    game->enemy[0].position = {5.0f, 0.0f, 3.0f};
+    game->enemy[1].position = {-5.0f, 0.0f, 3.0f};
+    game->enemy[2].position = {-5.0f, 0.0f, -3.0f};
+    game->enemy[3].position = {2.0f, 0.0f, -1.0f};
+    game->enemy[4].position = {-5.0f, 0.0f, 10.0f};
+    for(int i = 0; i < 5; i++)
+    {
+        game->enemy[i].collider.c = {game->enemy[i].position.x,
+                                     game->enemy[i].position.y + 0.85f,
+                                     game->enemy[i].position.z};
+        game->enemy[i].collider.r[0] = 0.2f; 
+        game->enemy[i].collider.r[1] = 0.8f;
+        game->enemy[i].collider.r[2] = 0.2f;
+        game->enemy[i].life = 5;
+    }
 
 }
 
@@ -68,6 +94,7 @@ void ShootProjectile(Projectile* projectile, Vec3 start, Vec3 end)
     projectile->start = start;
     projectile->end   = end;
     projectile->distance = 0.0f;
+    projectile->impactSomething = false;
 }
 
 Matrix UpdateProjectile(Projectile* projectile, float deltaTime)
@@ -100,21 +127,45 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     DrawLine(&game->xAxis, get_identity_matrix());
     DrawLine(&game->yAxis, get_identity_matrix());
     DrawLine(&game->zAxis, get_identity_matrix());
-
+    
+    Matrix model = get_identity_matrix();
     UseShader(&game->mesh_shader);
-    Matrix model = get_scale_matrix({0.01f, 0.01f, 0.01f}) * get_rotation_x_matrix(to_radiant(-90.0f)) * get_translation_matrix(game->enemy.position);
-    glBindTexture(GL_TEXTURE_2D, game->naruto.texId);
-    glBindVertexArray(game->naruto.vao);
-    SetShaderMatrix(model, game->mesh_shader.worldMatLoc);
-    glDrawElements(GL_TRIANGLES, game->naruto.numIndex * 3, GL_UNSIGNED_INT, 0);
+    for(int i = 0; i < 5; i++)
+    {
+        if(game->enemy[i].life > 0)
+        { 
+            model = get_scale_matrix({0.01f, 0.01f, 0.01f}) * get_rotation_x_matrix(to_radiant(-90.0f)) * get_translation_matrix(game->enemy[i].position);
+            glBindTexture(GL_TEXTURE_2D, game->naruto.texId);
+            glBindVertexArray(game->naruto.vao);
+            SetShaderMatrix(model, game->mesh_shader.worldMatLoc);
+            glDrawElements(GL_TRIANGLES, game->naruto.numIndex * 3, GL_UNSIGNED_INT, 0);
 
-    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
-    glBindVertexArray(game->enemy.colliderMesh.vao);
-    glBindTexture(GL_TEXTURE_2D, game->enemy.colliderMesh.texId);
-    model = get_scale_matrix({0.2f, 0.8f, 0.2f}) * get_translation_matrix(game->enemy.collider.c);
-    SetShaderMatrix(model, game->mesh_shader.worldMatLoc);
-    glDrawElements(GL_TRIANGLES, game->enemy.colliderMesh.numIndex * 3, GL_UNSIGNED_INT, 0);
-    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);
+            glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
+            glBindVertexArray(game->colliderMesh.vao);
+            glBindTexture(GL_TEXTURE_2D, game->colliderMesh.texId);
+            model = get_scale_matrix({0.2f, 0.8f, 0.2f}) * get_translation_matrix(game->enemy[i].collider.c);
+            SetShaderMatrix(model, game->mesh_shader.worldMatLoc);
+            glDrawElements(GL_TRIANGLES, game->colliderMesh.numIndex * 3, GL_UNSIGNED_INT, 0);
+            glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);
+        }
+    }
+
+    
+    glBindVertexArray(game->colliderMesh.vao);
+    for(int i = 0; i < 4; i++)
+    {
+        glBindTexture(GL_TEXTURE_2D, game->ball.texId);
+        model = get_scale_matrix(game->buildings[i].scale) * get_translation_matrix(game->buildings[i].position);
+        SetShaderMatrix(model, game->mesh_shader.worldMatLoc);
+        glDrawElements(GL_TRIANGLES, game->colliderMesh.numIndex * 3, GL_UNSIGNED_INT, 0);
+
+        glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
+        glBindTexture(GL_TEXTURE_2D, game->colliderMesh.texId);
+        model = get_scale_matrix(game->buildings[i].scale) * get_translation_matrix(game->buildings[i].collider.c);
+        SetShaderMatrix(model, game->mesh_shader.worldMatLoc);
+        glDrawElements(GL_TRIANGLES, game->colliderMesh.numIndex * 3, GL_UNSIGNED_INT, 0);
+        glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);
+    }
     
     model = get_identity_matrix();
     glBindTexture(GL_TEXTURE_2D, game->terrain.texId);
@@ -162,12 +213,11 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     }
     actualProjectile %= 200;
 
-
     for(int i = 0 ; i < 200; i++)
     {
-        Matrix projectileModel = get_scale_matrix({0.01f, 0.01f, 0.01f}) * UpdateProjectile(&game->projectile[i], deltaTime);
+        Matrix projectileModel = get_scale_matrix({0.02f, 0.02f, 0.02f}) * UpdateProjectile(&game->projectile[i], deltaTime);
         game->projCollider[i].c = game->projectile[i].position;
-        if(game->projectile[i].distance <= 1.0f)
+        if(game->projectile[i].distance <= 1.0f && game->projectile[i].impactSomething == false)
         {
             glBindVertexArray(game->ball.vao);
             glBindTexture(GL_TEXTURE_2D, game->ball.texId);
@@ -175,20 +225,33 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
             glDrawElements(GL_TRIANGLES, game->ball.numIndex * 3, GL_UNSIGNED_INT, 0);
 
             glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
-            glBindVertexArray(game->enemy.colliderMesh.vao);
-            glBindTexture(GL_TEXTURE_2D, game->enemy.colliderMesh.texId);
-            projectileModel = get_scale_matrix({0.01f, 0.01f, 0.01f}) * get_translation_matrix(game->projCollider[i].c);
+            glBindVertexArray(game->colliderMesh.vao);
+            glBindTexture(GL_TEXTURE_2D, game->colliderMesh.texId);
+            projectileModel = get_scale_matrix({0.02f, 0.02f, 0.02f}) * get_translation_matrix(game->projCollider[i].c);
             SetShaderMatrix(projectileModel, game->mesh_shader.worldMatLoc);
-            glDrawElements(GL_TRIANGLES, game->enemy.colliderMesh.numIndex * 3, GL_UNSIGNED_INT, 0);
+            glDrawElements(GL_TRIANGLES, game->colliderMesh.numIndex * 3, GL_UNSIGNED_INT, 0);
             glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);
+
+            for(int j = 0; j < 4; j++)
+            {
+                if(TestAABBAABB(game->projCollider[i], game->buildings[j].collider) == 1 && game->projectile[i].impactSomething == false)
+                {
+                    game->projectile[i].impactSomething = true;
+                }
+            }
+
+            for(int j = 0; j < 5; j++)
+            {
+                    if(TestAABBAABB(game->projCollider[i], game->enemy[j].collider) == 1 && game->projectile[i].impactSomething == false)
+                {
+                    game->enemy[j].life--;
+                    game->projectile[i].impactSomething = true;
+                }
+            }
+
         }
 
 
-
-        if(TestAABBAABB(game->projCollider[i], game->enemy.collider) == 1)
-        {
-            OutputDebugString("shoot!!\n");
-        }
     }
 
 

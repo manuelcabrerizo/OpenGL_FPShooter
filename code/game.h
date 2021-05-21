@@ -21,13 +21,21 @@ struct Projectile
     Vec3 end;
     float speed;
     float distance;
+    bool impactSomething;
 };
 
 struct Enemy
 {
     AABB collider;
+    Vec3 position; 
+    int life;
+};
+
+struct Building
+{
+    AABB collider;
     Vec3 position;
-    Mesh colliderMesh;
+    Vec3 scale;
 };
 
 struct UI
@@ -48,14 +56,18 @@ struct MainGame
     Line xAxis;
     Line yAxis;
     Line zAxis;
-    
+   
+    Mesh colliderMesh;
+
     Mesh naruto;
-    Enemy enemy;
+    Enemy enemy[5];
 
     Mesh pistol;
     Mesh ball;
     Projectile projectile[200];
     AABB     projCollider[200];
+
+    Building buildings[4]; 
 };
 
 void GameInit(MainGame* game);

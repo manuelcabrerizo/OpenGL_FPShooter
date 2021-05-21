@@ -115,8 +115,8 @@ bool InitOpengGLContext(HWND* hWnd, HDC* handle_device_context)
     }
     
     // set up initial configuration for open GL...
-    //glEnable(GL_CULL_FACE);
-    //glCullFace(GL_FRONT);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
     glViewport(0, 0, WNDWIDTH, WNDHEIGHT);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glEnable(GL_DEPTH_TEST); 
