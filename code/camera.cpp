@@ -3,8 +3,8 @@
 
 void InitializeCamera(Camera* camera)
 {
-    camera->position = {0.0f, 1.0f, -1.0f}; 
-    camera->target   = {0.0f, 1.0f, 1.0f};
+    camera->position = {0.0f, 2.0f, -1.0f}; 
+    camera->target   = {0.0f, 2.0f, 1.0f};
     camera->up       = {0.0f, 1.0f, 0.0f};
     camera->right    = vec3_cross(camera->up, camera->target);
     camera->front    = vec3_cross(camera->up, camera->right);

@@ -35,7 +35,7 @@ void GameInit(MainGame* game)
     game->zAxis = GenLine({0.0f, 0.0f, -100.0f}, {0.0f, 0.0f, 100.0f}, {0.0f, 0.0f, 1.0f}, &game->main_shader); 
     
     GenerateTerrain(&game->terrain, -10, -10, 20, 20, 1, "./data/terrain.bmp");
-    LoadOBJFileIndex(&game->pistol, "./data/gun.obj", "./data/pistol.bmp");
+    LoadOBJFileIndex(&game->pistol, "./data/weapon.obj", "./data/pistol.bmp");
     LoadOBJFileIndex(&game->ball, "./data/bullet.obj", "./data/bullet.bmp");
 
     for(int i = 0; i < 200; i++)
@@ -79,8 +79,8 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     // UI STAFF...
     float xPos = (float)WNDWIDTH  / 2.0f;
     float yPos = (float)WNDHEIGHT / 2.0f;
-    DrawLine(&game->ui.xAxis, get_scale_matrix({30.0f, 0.0f, 0.0f}) * get_translation_matrix({xPos, yPos, 0.0f})); 
-    DrawLine(&game->ui.yAxis, get_scale_matrix({0.0f, 30.0f, 0.0f}) * get_translation_matrix({xPos, yPos, 0.0f}));
+    DrawLine(&game->ui.xAxis, get_scale_matrix({10.0f, 0.0f, 0.0f}) * get_translation_matrix({xPos, yPos, 0.0f})); 
+    DrawLine(&game->ui.yAxis, get_scale_matrix({0.0f, 10.0f, 0.0f}) * get_translation_matrix({xPos, yPos, 0.0f}));
     // GAME 3D STUFF...
     DrawLine(&game->xAxis, get_identity_matrix());
     DrawLine(&game->yAxis, get_identity_matrix());
@@ -96,24 +96,20 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     glBindVertexArray(game->pistol.vao);
     glBindTexture(GL_TEXTURE_2D, game->pistol.texId);
     
-    
-    //######################-IMPROVE-######################
-    Vec3 pistolPosition = {1.0f, 1.0f, 1.0f};
-    pistolPosition = normaliza_vec3(vec3_rotate_arbitrary_axis(game->camera.right, pistolPosition, to_radiant(game->camera.pitch)));
-    pistolPosition = normaliza_vec3(vec3_rotate_arbitrary_axis(game->camera.up, pistolPosition, to_radiant(game->camera.yaw)));
+    Vec3 zOffset = normaliza_vec3(game->camera.target);
+    Vec3 xOffset = normaliza_vec3(game->camera.right);
+    Vec3 pistolFinalPos = game->camera.position + zOffset*0.2f + xOffset*0.05f; 
+
     if(game->camera.isMoving == true)
     {  
         static float time = 0.0f;
-        pistolPosition.y = pistolPosition.y + sinf(time) / 40.0f;
+        pistolFinalPos.y = pistolFinalPos.y + sinf(time) / 40.0f;
         time += deltaTime * 15.0f;
-    }
-    pistolPosition.y -= 1.0f;
-    //######################################################
-
-     
-    Matrix pistolPos = get_translation_matrix(game->camera.position + pistolPosition*0.2f);
+    } 
+    
+    Matrix pistolPos = get_translation_matrix(pistolFinalPos);
     Matrix pistolRot = get_rotation_y_matrix(-to_radiant(game->camera.yaw + -90.0f)) *
-                       get_rotation_arbitrary_matrix(game->camera.right, to_radiant(game->camera.pitch));
+                       get_rotation_arbitrary_matrix(xOffset, to_radiant(game->camera.pitch));
     Matrix pistolModel = get_scale_matrix({0.01f, 0.01f, 0.01f}) * pistolRot * pistolPos;
 
 
@@ -126,8 +122,10 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     static bool mouseLButtonPress = false;
     static int actualProjectile   = 0;
     if(GetMouseButtonPress(&game->input, LEFTBUTTON) && mouseLButtonPress == false)
-    {
-        ShootProjectile(&game->projectile[actualProjectile], game->camera.position + pistolPosition*0.2f, game->camera.position + (game->camera.target * 10.0f));
+    { 
+        Vec3 bulletPos = pistolFinalPos;
+        bulletPos.y -= 0.03f;
+        ShootProjectile(&game->projectile[actualProjectile], bulletPos, game->camera.position + (game->camera.target * 10.0f));
         mouseLButtonPress = true;
         actualProjectile++;
     }
