@@ -94,44 +94,46 @@ void ProcessPlayerMovement(Input* input, Camera* camera, Building* buildings, fl
     Vec3 playerVelocity = {0.0f, 0.0f, 0.0f};
     if(GetKeyDown(input, 'W'))
     {
-        playerVelocity =  normaliza_vec3(camera->front);
+        playerVelocity +=  normaliza_vec3(camera->front);
         camera->isMoving = true;
     }
     if(GetKeyDown(input, 'S'))
     {
-        playerVelocity =  -normaliza_vec3(camera->front);
-        //playerNewPos = (camera->front * 2.0f) * deltaTime;
+        playerVelocity +=  -normaliza_vec3(camera->front);
         camera->isMoving = true;
     }
     if(GetKeyDown(input, 'A'))
     {
-        playerVelocity = normaliza_vec3(camera->right);
-        //playerNewPos = (camera->right * 2.0f) * deltaTime;
+        playerVelocity += normaliza_vec3(camera->right);
         camera->isMoving = true;
     }
     if(GetKeyDown(input, 'D'))
     {
-        playerVelocity = -normaliza_vec3(camera->right);
-        //playerNewPos = (camera->right * 2.0f) * deltaTime;
+        playerVelocity += -normaliza_vec3(camera->right);
         camera->isMoving = true;
     }
     if(!GetKeyDown(input, 'W') && !GetKeyDown(input, 'S') && !GetKeyDown(input, 'A') && !GetKeyDown(input, 'D'))
     {
         camera->isMoving = false;
     }
-     
+    Vec3 normPlayerVelocity = {0.0f, 0.0f, 0.0f};
+    if(vec3_length(playerVelocity) != 0.0f)
+    { 
+        normPlayerVelocity = normaliza_vec3(playerVelocity);
+    }
+
     float t = 0;
     Vec3 hitPoint  = {0.0f, 0.0f, 0.0f};
     Vec3 hitNormal = {0.0f, 0.0f, 0.0f}; 
     for(int i = 0; i < 4; i++)
     {
-        if(XZRayIntersectAABB(camera->position, playerVelocity, buildings[i].collider, hitPoint, hitNormal, t) && t <= 1.0f)
+        if(XZRayIntersectAABB(camera->position, normPlayerVelocity, buildings[i].collider, hitPoint, hitNormal, t) && t <= 1.0f)
         {
-            Vec3 temp = {absf(playerVelocity.x), playerVelocity.y, absf(playerVelocity.z)};
-            playerVelocity += hitNormal * temp * (1.0f - t);
+            Vec3 temp = {absf(normPlayerVelocity.x), normPlayerVelocity.y, absf(normPlayerVelocity.z)};
+            normPlayerVelocity += hitNormal * temp * (1.0f - t);
         }
     }
-    camera->position += (playerVelocity * 2.0f) * deltaTime; 
+    camera->position += (normPlayerVelocity * 2.0f) * deltaTime; 
     camera->viewMat = get_view_matrix(camera->position, camera->position + camera->target, camera->up);  
 }
 
