@@ -5,6 +5,14 @@
 #include <string.h>
 #include "utility.h"
 
+
+void SwapFloat(float& a, float& b)
+{
+    float temp = a;
+    a = b;
+    b = temp; 
+}
+
 char* ReadFile(const char* file_path)
 {
     FILE* file;

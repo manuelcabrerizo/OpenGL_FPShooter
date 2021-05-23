@@ -42,9 +42,9 @@ void GameInit(MainGame* game)
 
 
     game->buildings[0].position = {10.0f, 1.0f, 10.0f};
-    game->buildings[1].position = {-10.0f, 1.0f, -7.0f};
-    game->buildings[2].position = {-2.0f, 1.0f, 15.0f};
-    game->buildings[3].position = {-16.0f, 1.0f, 9.0f};
+    game->buildings[1].position = {-10.0f, 3.0f, -7.0f};
+    game->buildings[2].position = {-2.0f, 2.0f, 15.0f};
+    game->buildings[3].position = {-16.0f, 4.0f, 9.0f};
     game->buildings[0].scale = {4.0f, 1.0f, 2.0f};
     game->buildings[1].scale = {6.0f, 3.0f, 4.0f};
     game->buildings[2].scale = {6.0f, 2.0f, 6.0f};
@@ -89,6 +89,73 @@ void GameInit(MainGame* game)
 
 }
 
+void ProcessPlayerMovement(Input* input, Camera* camera, Building* buildings, float deltaTime)
+{
+    Vec3 playerNewPos = camera->position;
+    if(GetKeyDown(input, 'W'))
+    {
+        playerNewPos +=  (camera->front * 2.0f) * deltaTime;
+        camera->isMoving = true;
+    }
+    if(GetKeyDown(input, 'S'))
+    {
+        playerNewPos -= (camera->front * 2.0f) * deltaTime;
+        camera->isMoving = true;
+    }
+    if(GetKeyDown(input, 'A'))
+    {
+        playerNewPos += (camera->right * 2.0f) * deltaTime;
+        camera->isMoving = true;
+    }
+    if(GetKeyDown(input, 'D'))
+    {
+        playerNewPos -= (camera->right * 2.0f) * deltaTime;
+        camera->isMoving = true;
+    }
+    if(!GetKeyDown(input, 'W') && !GetKeyDown(input, 'S') && !GetKeyDown(input, 'A') && !GetKeyDown(input, 'D'))
+    {
+        camera->isMoving = false;
+    }
+     
+    float t = 0;
+    Vec3 hitPoint  = {0.0f, 0.0f, 0.0f};
+    Vec3 hitNormal = {0.0f, 0.0f, 0.0f};
+    bool canWalk = true;
+    Vec3 posibleCollitions[4];
+    int numbCollitions = 0;
+    for(int i = 0; i < 4; i++)
+    {
+        Vec3 target = normaliza_vec3(playerNewPos - camera->position);
+        if(XZRayIntersectAABB(camera->position, target, buildings[i].collider, hitPoint, hitNormal, t))
+        {
+            canWalk = false;
+            posibleCollitions[numbCollitions] = hitPoint;
+            numbCollitions++;
+        }
+    }
+
+    float closestCollition;
+    for(int i = 0; i < numbCollitions; i++)
+    {
+        if(i == 0)
+            closestCollition = vec3_length(posibleCollitions[i] - playerNewPos);
+        if(closestCollition > vec3_length(posibleCollitions[i] - playerNewPos))
+            closestCollition = vec3_length(posibleCollitions[i] - playerNewPos);
+    }
+    if(canWalk)
+    {
+      camera->position = playerNewPos;
+    }
+    else if(closestCollition > 0.3f)
+    {
+        camera->position = playerNewPos;
+    }
+
+    camera->viewMat = get_view_matrix(camera->position, camera->position + camera->target, camera->up);
+
+    
+}
+
 void ShootProjectile(Projectile* projectile, Vec3 start, Vec3 end)
 {
     projectile->start = start;
@@ -113,6 +180,8 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
 {
     // Update...
     UpdateCamera(&game->camera, &game->input, deltaTime);
+    ProcessPlayerMovement(&game->input, &game->camera, game->buildings, deltaTime);
+
     UseShader(&game->main_shader);
     SetShaderMatrix(game->camera.viewMat, game->main_shader.viewMatLoc);
     UseShader(&game->mesh_shader);
@@ -199,7 +268,7 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     // START::PROCCESING::OUR::PROJECTILE::STUFF...
     static bool mouseLButtonPress = false;
     static int actualProjectile   = 0;
-    if(GetMouseButtonPress(&game->input, LEFTBUTTON) && mouseLButtonPress == false)
+    if((GetMouseButtonPress(&game->input, LEFTBUTTON) || game->input.A == true) && mouseLButtonPress == false)
     { 
         Vec3 bulletPos = pistolFinalPos;
         bulletPos.y -= 0.03f;
@@ -207,7 +276,7 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
         mouseLButtonPress = true;
         actualProjectile++;
     }
-    if(!GetMouseButtonPress(&game->input, LEFTBUTTON) && mouseLButtonPress == true)
+    if((!GetMouseButtonPress(&game->input, LEFTBUTTON) && game->input.A == false) && mouseLButtonPress == true)
     {
         mouseLButtonPress = false;
     }
@@ -239,19 +308,15 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
                     game->projectile[i].impactSomething = true;
                 }
             }
-
             for(int j = 0; j < 5; j++)
             {
-                    if(TestAABBAABB(game->projCollider[i], game->enemy[j].collider) == 1 && game->projectile[i].impactSomething == false)
+                if(TestAABBAABB(game->projCollider[i], game->enemy[j].collider) == 1 && game->projectile[i].impactSomething == false)
                 {
                     game->enemy[j].life--;
                     game->projectile[i].impactSomething = true;
                 }
             }
-
         }
-
-
     }
 
 

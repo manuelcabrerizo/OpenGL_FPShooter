@@ -72,6 +72,8 @@ struct Terrain
     uint32_t texId;
 };
 
+
+void SwapFloat(float& a, float& b);
 char* ReadFile(const char* file_path);
 Texture LoadBMP(const char* filename);
 void LoadOBJFileIndex(Mesh* mesh, const char* filePhat, const char* texFileName);

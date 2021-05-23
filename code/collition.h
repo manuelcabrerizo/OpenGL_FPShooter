@@ -12,5 +12,5 @@ struct AABB
 
 
 int TestAABBAABB(AABB a, AABB b);
-
+int XZRayIntersectAABB(Vec3 v, Vec3 d, AABB target, Vec3& contactPoint, Vec3& contactNormal, float& tHitNear);
 #endif

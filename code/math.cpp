@@ -22,6 +22,21 @@ int Abs(int number)
     return number;
 }
 
+
+float MaxFloat(float a, float b)
+{
+    if(a > b)
+        return a;
+    return b;
+}
+
+float MinFloat(float a, float b)
+{
+    if(a < b)
+        return a;
+    return b;
+}
+
 Vec3 vec3_rotate_y(Vec3 v, float angle)
 {
     Vec3 rotatedVector;
@@ -127,6 +142,15 @@ Vec3 operator-(const Vec3& v)
     v.x != 0 ? result.x = -v.x : result.x = v.x;
     v.y != 0 ? result.y = -v.y : result.y = v.y;
     v.z != 0 ? result.z = -v.z : result.z = v.z;
+    return result;
+}
+
+Vec3 operator/(const Vec3& v0, const Vec3& v1)
+{
+    Vec3 result;
+    result.x = v0.x / v1.x;
+    result.y = v0.y / v1.y;
+    result.z = v0.z / v1.z;
     return result;
 }
 
