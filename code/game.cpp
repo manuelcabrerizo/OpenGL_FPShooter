@@ -282,12 +282,30 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
             glDrawElements(GL_TRIANGLES, game->colliderMesh.numIndex * 3, GL_UNSIGNED_INT, 0);
             glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);
 
+
+            float t = 0;
+            Vec3 hitPoint  = {0.0f, 0.0f, 0.0f};
+            Vec3 hitNormal = {0.0f, 0.0f, 0.0f}; 
             for(int j = 0; j < 4; j++)
             {
-                if(TestAABBAABB(game->projCollider[i], game->buildings[j].collider) == 1 && game->projectile[i].impactSomething == false)
+                Vec3 direction = game->projectile[i].end - game->projectile[i].start;
+                if(XZRayIntersectAABBX(game->projectile[i].start, direction, game->buildings[j].collider, hitPoint, hitNormal, t) == 1 && t <= 1.0f)
                 {
-                    game->projectile[i].impactSomething = true;
-                }
+                    if(game->projectile[i].distance <= 1.0f)
+                    {
+                        if(t >= 0.0f && t <= 1.0f)
+                        {
+                            if(game->projectile[i].distance > t)
+                            {
+                                if(TestAABBAABB(game->projCollider[i], game->buildings[j].collider) == 1 && game->projectile[i].impactSomething == false)
+                                {
+                                    Vec3 newTarget = normaliza_vec3(Vec3Reflect(game->projectile[i].start, game->projectile[i].end, hitNormal));
+                                    ShootProjectile(&game->projectile[i], game->projectile[i].position, game->projectile[i].position + (newTarget * 10.0f));
+                                }
+                            }  
+                        }
+                    }           
+                }          
             }
             for(int j = 0; j < 5; j++)
             {
@@ -305,3 +323,6 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
 
 
 }
+
+
+
