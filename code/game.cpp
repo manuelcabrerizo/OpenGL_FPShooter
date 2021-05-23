@@ -75,7 +75,7 @@ void GameInit(MainGame* game)
     game->enemy[1].position = {-5.0f, 0.0f, 3.0f};
     game->enemy[2].position = {-5.0f, 0.0f, -3.0f};
     game->enemy[3].position = {2.0f, 0.0f, -1.0f};
-    game->enemy[4].position = {-5.0f, 0.0f, 10.0f};
+    game->enemy[4].position = {-5.0f, 0.0f, 7.0f};
     for(int i = 0; i < 5; i++)
     {
         game->enemy[i].collider.c = {game->enemy[i].position.x,
@@ -291,10 +291,13 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
             }
             for(int j = 0; j < 5; j++)
             {
-                if(TestAABBAABB(game->projCollider[i], game->enemy[j].collider) == 1 && game->projectile[i].impactSomething == false)
+                if(game->enemy[j].life > 0)
                 {
-                    game->enemy[j].life--;
-                    game->projectile[i].impactSomething = true;
+                    if(TestAABBAABB(game->projCollider[i], game->enemy[j].collider) == 1 && game->projectile[i].impactSomething == false)
+                    {
+                        game->enemy[j].life--;
+                        game->projectile[i].impactSomething = true;
+                    }
                 }
             }
         }
