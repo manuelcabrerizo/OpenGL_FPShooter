@@ -38,6 +38,7 @@ Vec3 operator-(const Vec3& v);
 Vec3 vec3_rotate_y(Vec3 v, float angle);
 Vec3 operator*(const Matrix& m, const Vec3& v);
 Vec3 operator/(const Vec3& v0, const Vec3& v1);
+Vec3 operator*(const Vec3& v0, const Vec3& v1);
 
 Matrix operator+(const Matrix& a, const Matrix& b);
 Matrix operator-(const Matrix& a, const Matrix& b);

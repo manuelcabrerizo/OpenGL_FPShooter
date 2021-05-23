@@ -91,25 +91,28 @@ void GameInit(MainGame* game)
 
 void ProcessPlayerMovement(Input* input, Camera* camera, Building* buildings, float deltaTime)
 {
-    Vec3 playerNewPos = camera->position;
+    Vec3 playerVelocity = {0.0f, 0.0f, 0.0f};
     if(GetKeyDown(input, 'W'))
     {
-        playerNewPos +=  (camera->front * 2.0f) * deltaTime;
+        playerVelocity =  normaliza_vec3(camera->front);
         camera->isMoving = true;
     }
     if(GetKeyDown(input, 'S'))
     {
-        playerNewPos -= (camera->front * 2.0f) * deltaTime;
+        playerVelocity =  -normaliza_vec3(camera->front);
+        //playerNewPos = (camera->front * 2.0f) * deltaTime;
         camera->isMoving = true;
     }
     if(GetKeyDown(input, 'A'))
     {
-        playerNewPos += (camera->right * 2.0f) * deltaTime;
+        playerVelocity = normaliza_vec3(camera->right);
+        //playerNewPos = (camera->right * 2.0f) * deltaTime;
         camera->isMoving = true;
     }
     if(GetKeyDown(input, 'D'))
     {
-        playerNewPos -= (camera->right * 2.0f) * deltaTime;
+        playerVelocity = -normaliza_vec3(camera->right);
+        //playerNewPos = (camera->right * 2.0f) * deltaTime;
         camera->isMoving = true;
     }
     if(!GetKeyDown(input, 'W') && !GetKeyDown(input, 'S') && !GetKeyDown(input, 'A') && !GetKeyDown(input, 'D'))
@@ -119,41 +122,17 @@ void ProcessPlayerMovement(Input* input, Camera* camera, Building* buildings, fl
      
     float t = 0;
     Vec3 hitPoint  = {0.0f, 0.0f, 0.0f};
-    Vec3 hitNormal = {0.0f, 0.0f, 0.0f};
-    bool canWalk = true;
-    Vec3 posibleCollitions[4];
-    int numbCollitions = 0;
+    Vec3 hitNormal = {0.0f, 0.0f, 0.0f}; 
     for(int i = 0; i < 4; i++)
     {
-        Vec3 target = normaliza_vec3(playerNewPos - camera->position);
-        if(XZRayIntersectAABB(camera->position, target, buildings[i].collider, hitPoint, hitNormal, t))
+        if(XZRayIntersectAABB(camera->position, playerVelocity, buildings[i].collider, hitPoint, hitNormal, t) && t <= 1.0f)
         {
-            canWalk = false;
-            posibleCollitions[numbCollitions] = hitPoint;
-            numbCollitions++;
+            Vec3 temp = {absf(playerVelocity.x), playerVelocity.y, absf(playerVelocity.z)};
+            playerVelocity += hitNormal * temp * (1.0f - t);
         }
     }
-
-    float closestCollition;
-    for(int i = 0; i < numbCollitions; i++)
-    {
-        if(i == 0)
-            closestCollition = vec3_length(posibleCollitions[i] - playerNewPos);
-        if(closestCollition > vec3_length(posibleCollitions[i] - playerNewPos))
-            closestCollition = vec3_length(posibleCollitions[i] - playerNewPos);
-    }
-    if(canWalk)
-    {
-      camera->position = playerNewPos;
-    }
-    else if(closestCollition > 0.3f)
-    {
-        camera->position = playerNewPos;
-    }
-
-    camera->viewMat = get_view_matrix(camera->position, camera->position + camera->target, camera->up);
-
-    
+    camera->position += (playerVelocity * 2.0f) * deltaTime; 
+    camera->viewMat = get_view_matrix(camera->position, camera->position + camera->target, camera->up);  
 }
 
 void ShootProjectile(Projectile* projectile, Vec3 start, Vec3 end)

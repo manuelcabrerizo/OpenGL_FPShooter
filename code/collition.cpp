@@ -11,10 +11,10 @@ int TestAABBAABB(AABB a, AABB b)
 
 int XZRayIntersectAABB(Vec3 v, Vec3 d, AABB target, Vec3& contactPoint, Vec3& contactNormal, float& tHitNear)
 {
-    float targetX = target.c.x - target.r[0];
-    float targetZ = target.c.z - target.r[2];
-    float targetWidth = target.r[0] * 2.0f;
-    float targetDepth = target.r[2] * 2.0f;
+    float targetX = (target.c.x - target.r[0]) - 0.1f;
+    float targetZ = (target.c.z - target.r[2]) - 0.1f;
+    float targetWidth = (target.r[0] * 2.0f) + 0.2f;
+    float targetDepth = (target.r[2] * 2.0f) + 0.2f;
 
     Vec3 targetPos  = {targetX, 0.0f, targetZ};
     Vec3 targetSize = {targetWidth, 0.0f, targetDepth};
