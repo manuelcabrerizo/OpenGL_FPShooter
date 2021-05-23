@@ -253,7 +253,7 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     { 
         Vec3 bulletPos = pistolFinalPos;
         bulletPos.y -= 0.03f;
-        ShootProjectile(&game->projectile[actualProjectile], bulletPos, game->camera.position + (game->camera.target * 10.0f));
+        ShootProjectile(&game->projectile[actualProjectile], bulletPos, game->camera.position + (normaliza_vec3(game->camera.target) * 20.0f));
         mouseLButtonPress = true;
         actualProjectile++;
     }
@@ -300,7 +300,7 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
                                 if(TestAABBAABB(game->projCollider[i], game->buildings[j].collider) == 1 && game->projectile[i].impactSomething == false)
                                 {
                                     Vec3 newTarget = normaliza_vec3(Vec3Reflect(game->projectile[i].start, game->projectile[i].end, hitNormal));
-                                    ShootProjectile(&game->projectile[i], game->projectile[i].position, game->projectile[i].position + (newTarget * 10.0f));
+                                    ShootProjectile(&game->projectile[i], game->projectile[i].position, game->projectile[i].position + (newTarget * 20.0f));
                                 }
                             }  
                         }
