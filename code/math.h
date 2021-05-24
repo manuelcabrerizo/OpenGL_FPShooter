@@ -18,6 +18,11 @@ struct Matrix
     float m[4][4];
 };
 
+struct Matrix3
+{
+    float m[3][3];
+};
+
 float to_radiant(float v);
 float absf(float f);
 int Abs(int number);
@@ -54,6 +59,10 @@ Matrix get_rotation_x_matrix(float angle);
 Matrix get_rotation_y_matrix(float angle);
 Matrix get_rotation_z_matrix(float angle);
 Matrix get_rotation_arbitrary_matrix(Vec3 n, float angle);
+
+Matrix3 to_3x3_matrix(Matrix m);
+Matrix to_4x4_matrix(Matrix3 m);
+
 float vec3_dot(Vec3 a, Vec3 b);
 Vec3 vec3_cross(Vec3 a, Vec3 b);
 float vec3_length(Vec3 v);

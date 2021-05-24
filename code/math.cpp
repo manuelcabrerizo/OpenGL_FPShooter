@@ -267,6 +267,27 @@ Matrix get_identity_matrix()
     return result;
 }
 
+Matrix3 to_3x3_matrix(Matrix m)
+{
+     Matrix3 result = {{
+        {m.m[0][0], m.m[0][1], m.m[0][2]},
+        {m.m[1][0], m.m[1][1], m.m[1][2]},
+        {m.m[2][0], m.m[2][1], m.m[2][2]}
+     }};
+    return result; 
+}
+
+Matrix to_4x4_matrix(Matrix3 m)
+{
+     Matrix result = {{
+        {m.m[0][0], m.m[0][1], m.m[0][2], 0.0f},
+        {m.m[1][0], m.m[1][1], m.m[1][2], 0.0f},
+        {m.m[2][0], m.m[2][1], m.m[2][2], 0.0f},
+        {0.0f,      0.0f,      0.0f,      1.0f}
+     }};
+    return result; 
+}
+
 Matrix matrix_transpose(Matrix m)
 {
     Matrix result = {{

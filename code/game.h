@@ -25,11 +25,13 @@ struct UI
 struct MainGame
 {
     Shader main_shader;
-    Shader mesh_shader; 
+    Shader mesh_shader;
+    Shader skybox_shader; 
     UI ui; 
     Input input;
     Camera camera;
     Terrain terrain;
+    SkyBox skyBox;
     Line xAxis;
     Line yAxis;
     Line zAxis;

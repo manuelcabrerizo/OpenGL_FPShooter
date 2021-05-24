@@ -16,12 +16,17 @@ void GameInit(MainGame* game)
     LoadShader(&game->ui.shader,
             "./code/uiVertexShader.vert",
             "./code/uiFragmentShader.frag");
+    LoadShader(&game->skybox_shader,
+            "./code/SkyBoxVertexShader.vert",
+            "./code/SkyBoxFragmentShader.frag");
     // Create Boths of our PROJECTION MATRIX...
     Matrix proj = get_projection_perspective_matrix(to_radiant(90), WNDWIDTH/WNDHEIGHT, 0.1f, 100.0f);
     Matrix UI_othogona_proj = get_projection_orthogonal_matrix(WNDWIDTH, WNDHEIGHT, 0.1f, 100.0f); 
 
     UseShader(&game->ui.shader);
     SetShaderMatrix(UI_othogona_proj, game->ui.shader.projMatLoc);
+    UseShader(&game->skybox_shader);
+    SetShaderMatrix(proj, game->skybox_shader.projMatLoc);
     UseShader(&game->main_shader);
     SetShaderMatrix(proj, game->main_shader.projMatLoc);
     UseShader(&game->mesh_shader);
@@ -34,6 +39,16 @@ void GameInit(MainGame* game)
     game->yAxis = GenLine({0.0f, -100.0f, 0.0f}, {0.0f, 100.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, &game->main_shader);
     game->zAxis = GenLine({0.0f, 0.0f, -100.0f}, {0.0f, 0.0f, 100.0f}, {0.0f, 0.0f, 1.0f}, &game->main_shader); 
     
+    SkyBoxTextures(&game->skyBox,
+                   "./data/skybox/right.bmp",
+                   "./data/skybox/left.bmp",
+                   "./data/skybox/top.bmp",
+                   "./data/skybox/bottom.bmp",
+                   "./data/skybox/front.bmp",
+                   "./data/skybox/back.bmp"); 
+    GenerateSkyBox(&game->skyBox);
+
+
     GenerateTerrain(&game->terrain, -25, -25, 50, 50, 1, "./data/terrain.bmp");
     LoadOBJFileIndex(&game->pistol, "./data/weapon.obj", "./data/weapon.bmp");
     LoadOBJFileIndex(&game->ball, "./data/bullet.obj", "./data/bullet.bmp");
@@ -83,9 +98,9 @@ void GameInit(MainGame* game)
         game->enemy[i].collider.c = {game->enemy[i].position.x,
                                      game->enemy[i].position.y + 0.85f,
                                      game->enemy[i].position.z};
-        game->enemy[i].collider.r[0] = 0.2f; 
+        game->enemy[i].collider.r[0] = 0.1f; 
         game->enemy[i].collider.r[1] = 0.8f;
-        game->enemy[i].collider.r[2] = 0.2f;
+        game->enemy[i].collider.r[2] = 0.1f;
         game->enemy[i].life = 1;
     }
 }
@@ -96,7 +111,18 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     UpdateCamera(&game->camera, &game->input, deltaTime);
     ProcessPlayerMovement(&game->input, &game->camera, game->buildings, deltaTime);
     ProcessEnemyMovementAndCollition(game->enemy, 49, game->buildings, 4, &game->camera, deltaTime);
+    
 
+
+    // SKYBOX DRAW TESTING:::::THIS CAN BE BADD...
+    glDepthMask(GL_FALSE);
+    UseShader(&game->skybox_shader);
+    Matrix SkyBoxView = to_4x4_matrix(to_3x3_matrix(game->camera.viewMat));
+    SetShaderMatrix(SkyBoxView, game->skybox_shader.viewMatLoc);
+    glBindVertexArray(game->skyBox.vao);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, game->skyBox.textureID);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glDepthMask(GL_TRUE);
 
     UseShader(&game->main_shader);
     SetShaderMatrix(game->camera.viewMat, game->main_shader.viewMatLoc);
@@ -131,7 +157,7 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
             glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
             glBindVertexArray(game->colliderMesh.vao);
             glBindTexture(GL_TEXTURE_2D, game->colliderMesh.texId);
-            model = get_scale_matrix({0.2f, 0.8f, 0.2f}) * get_translation_matrix(game->enemy[i].collider.c);
+            model = get_scale_matrix({0.1f, 0.8f, 0.1f}) * get_translation_matrix(game->enemy[i].collider.c);
             SetShaderMatrix(model, game->mesh_shader.worldMatLoc);
             glDrawElements(GL_TRIANGLES, game->colliderMesh.numIndex * 3, GL_UNSIGNED_INT, 0);
             glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);
@@ -142,7 +168,7 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     glBindVertexArray(game->colliderMesh.vao);
     for(int i = 0; i < 4; i++)
     {
-        glBindTexture(GL_TEXTURE_2D, game->ball.texId);
+        glBindTexture(GL_TEXTURE_2D, game->pistol.texId);
         model = get_scale_matrix(game->buildings[i].scale) * get_translation_matrix(game->buildings[i].position);
         SetShaderMatrix(model, game->mesh_shader.worldMatLoc);
         glDrawElements(GL_TRIANGLES, game->colliderMesh.numIndex * 3, GL_UNSIGNED_INT, 0);

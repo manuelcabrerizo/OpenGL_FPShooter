@@ -72,6 +72,12 @@ struct Terrain
     uint32_t texId;
 };
 
+struct SkyBox
+{
+    unsigned int vao;
+    unsigned int textureID;
+};
+
 
 void SwapFloat(float& a, float& b);
 char* ReadFile(const char* file_path);
@@ -84,5 +90,14 @@ void GenerateTerrain(Terrain* terrain,
                      int numRows,
                      int cellSpacing,
                      const char* texFileName);
+void SkyBoxTextures(SkyBox* skyBox,
+               const char* text0,
+               const char* text1,
+               const char* text2,
+               const char* text3,
+               const char* text4,
+               const char* text5);
+void GenerateSkyBox(SkyBox* skyBox);
+
 
 #endif
