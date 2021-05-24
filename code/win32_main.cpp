@@ -139,7 +139,7 @@ int WinMain(
     wc.lpfnWndProc   = WindowProc;
     wc.hInstance     = hInstance; 
     wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
-    wc.lpszClassName = "BouncingBalls3D";
+    wc.lpszClassName = "FPShooter";
     if(RegisterClass(&wc) == 0)
     {
         OutputDebugString("FAILED::REGISTERING::CLASS\n");
@@ -156,8 +156,8 @@ int WinMain(
 
     // funtion that create the window whit the wndClass and a position and a dimention
     HWND hWnd = CreateWindow(
-                    "BouncingBalls3D",
-                    "BouncingBalls3D",
+                    "FPShooter",
+                    "FPShooter",
                     WS_OVERLAPPEDWINDOW,
                     0,
                     0,
