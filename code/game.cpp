@@ -62,7 +62,7 @@ void GameInit(MainGame* game)
         game->projectile[i].start    = {0.0f, 0.0f, 0.0f};
         game->projectile[i].position = {0.0f, 0.0f, 0.0f};
         game->projectile[i].end      = {0.0f, 0.0f, 0.0f};
-        game->projectile[i].speed    = 2.0f;
+        game->projectile[i].speed    = 1.0f;
         game->projCollider[i].c = game->projectile[i].position;
         game->projCollider[i].r[0] = 0.02f;
         game->projCollider[i].r[1] = 0.02f;
@@ -71,12 +71,14 @@ void GameInit(MainGame* game)
     }
 
     // ENEMY::STAFF...
-    game->enemy[0].position = {5.0f, 0.0f, 3.0f};
-    game->enemy[1].position = {-5.0f, 0.0f, 3.0f};
-    game->enemy[2].position = {-5.0f, 0.0f, -3.0f};
-    game->enemy[3].position = {2.0f, 0.0f, -1.0f};
-    game->enemy[4].position = {-5.0f, 0.0f, 7.0f};
-    for(int i = 0; i < 5; i++)
+    for(int k = 0; k < 7; k++)
+    {
+        for(int p = 0; p < 7; p++)
+        {
+            game->enemy[(p * 7) + k].position = {(float)p * 1.0f, 0.0f, (float)k * 1.0f};
+        }
+    }
+    for(int i = 0; i < 49; i++)
     {
         game->enemy[i].collider.c = {game->enemy[i].position.x,
                                      game->enemy[i].position.y + 0.85f,
@@ -84,77 +86,8 @@ void GameInit(MainGame* game)
         game->enemy[i].collider.r[0] = 0.2f; 
         game->enemy[i].collider.r[1] = 0.8f;
         game->enemy[i].collider.r[2] = 0.2f;
-        game->enemy[i].life = 5;
+        game->enemy[i].life = 1;
     }
-
-}
-
-void ProcessPlayerMovement(Input* input, Camera* camera, Building* buildings, float deltaTime)
-{
-    Vec3 playerVelocity = {0.0f, 0.0f, 0.0f};
-    if(GetKeyDown(input, 'W'))
-    {
-        playerVelocity +=  normaliza_vec3(camera->front);
-        camera->isMoving = true;
-    }
-    if(GetKeyDown(input, 'S'))
-    {
-        playerVelocity +=  -normaliza_vec3(camera->front);
-        camera->isMoving = true;
-    }
-    if(GetKeyDown(input, 'A'))
-    {
-        playerVelocity += normaliza_vec3(camera->right);
-        camera->isMoving = true;
-    }
-    if(GetKeyDown(input, 'D'))
-    {
-        playerVelocity += -normaliza_vec3(camera->right);
-        camera->isMoving = true;
-    }
-    if(!GetKeyDown(input, 'W') && !GetKeyDown(input, 'S') && !GetKeyDown(input, 'A') && !GetKeyDown(input, 'D'))
-    {
-        camera->isMoving = false;
-    }
-    Vec3 normPlayerVelocity = {0.0f, 0.0f, 0.0f};
-    if(vec3_length(playerVelocity) != 0.0f)
-    { 
-        normPlayerVelocity = normaliza_vec3(playerVelocity);
-    }
-
-    float t = 0;
-    Vec3 hitPoint  = {0.0f, 0.0f, 0.0f};
-    Vec3 hitNormal = {0.0f, 0.0f, 0.0f}; 
-    for(int i = 0; i < 4; i++)
-    {
-        if(XZRayIntersectAABB(camera->position, normPlayerVelocity, buildings[i].collider, hitPoint, hitNormal, t) && t <= 1.0f)
-        {
-            Vec3 temp = {absf(normPlayerVelocity.x), normPlayerVelocity.y, absf(normPlayerVelocity.z)};
-            normPlayerVelocity += hitNormal * temp * (1.0f - t);
-        }
-    }
-    camera->position += (normPlayerVelocity * 2.0f) * deltaTime; 
-    camera->viewMat = get_view_matrix(camera->position, camera->position + camera->target, camera->up);  
-}
-
-void ShootProjectile(Projectile* projectile, Vec3 start, Vec3 end)
-{
-    projectile->start = start;
-    projectile->end   = end;
-    projectile->distance = 0.0f;
-    projectile->impactSomething = false;
-}
-
-Matrix UpdateProjectile(Projectile* projectile, float deltaTime)
-{
-    Matrix model = get_identity_matrix();
-    if(projectile->distance <= 1.0f)
-    {        
-        projectile->position = Lerp(projectile->start, projectile->end, projectile->distance); 
-    } 
-    model = get_translation_matrix(projectile->position);
-    projectile->distance += projectile->speed * deltaTime;
-    return model;
 }
 
 void GameUnpdateAndRender(MainGame* game, float deltaTime)
@@ -162,6 +95,8 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     // Update...
     UpdateCamera(&game->camera, &game->input, deltaTime);
     ProcessPlayerMovement(&game->input, &game->camera, game->buildings, deltaTime);
+    ProcessEnemyMovementAndCollition(game->enemy, 49, game->buildings, 4, &game->camera, deltaTime);
+
 
     UseShader(&game->main_shader);
     SetShaderMatrix(game->camera.viewMat, game->main_shader.viewMatLoc);
@@ -180,11 +115,14 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     
     Matrix model = get_identity_matrix();
     UseShader(&game->mesh_shader);
-    for(int i = 0; i < 5; i++)
+    for(int i = 0; i < 49; i++)
     {
         if(game->enemy[i].life > 0)
         { 
-            model = get_scale_matrix({0.01f, 0.01f, 0.01f}) * get_rotation_x_matrix(to_radiant(-90.0f)) * get_translation_matrix(game->enemy[i].position);
+            model = get_scale_matrix({0.01f, 0.01f, 0.01f}) *
+                    get_rotation_x_matrix(to_radiant(-90.0f)) *
+                    get_rotation_y_matrix(game->enemy[i].roation) *
+                    get_translation_matrix(game->enemy[i].position);
             glBindTexture(GL_TEXTURE_2D, game->naruto.texId);
             glBindVertexArray(game->naruto.vao);
             SetShaderMatrix(model, game->mesh_shader.worldMatLoc);
@@ -282,32 +220,25 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
             glDrawElements(GL_TRIANGLES, game->colliderMesh.numIndex * 3, GL_UNSIGNED_INT, 0);
             glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);
 
-
             float t = 0;
             Vec3 hitPoint  = {0.0f, 0.0f, 0.0f};
             Vec3 hitNormal = {0.0f, 0.0f, 0.0f}; 
             for(int j = 0; j < 4; j++)
             {
                 Vec3 direction = game->projectile[i].end - game->projectile[i].start;
-                if(XZRayIntersectAABBX(game->projectile[i].start, direction, game->buildings[j].collider, hitPoint, hitNormal, t) == 1 && t <= 1.0f)
-                {
-                    if(game->projectile[i].distance <= 1.0f)
+                if(XZRayIntersectAABBX(game->projectile[i].start, direction, game->buildings[j].collider, hitPoint, hitNormal, t) == 1 && t >= 0.0f && t <= 1.0f)
+                { 
+                    if(game->projectile[i].distance > t)
                     {
-                        if(t >= 0.0f && t <= 1.0f)
+                        if(TestAABBAABB(game->projCollider[i], game->buildings[j].collider) == 1 && game->projectile[i].impactSomething == false)
                         {
-                            if(game->projectile[i].distance > t)
-                            {
-                                if(TestAABBAABB(game->projCollider[i], game->buildings[j].collider) == 1 && game->projectile[i].impactSomething == false)
-                                {
-                                    Vec3 newTarget = normaliza_vec3(Vec3Reflect(game->projectile[i].start, game->projectile[i].end, hitNormal));
-                                    ShootProjectile(&game->projectile[i], game->projectile[i].position, game->projectile[i].position + (newTarget * 20.0f));
-                                }
-                            }  
+                            Vec3 newTarget = normaliza_vec3(Vec3Reflect(game->projectile[i].start, game->projectile[i].end, hitNormal));
+                            ShootProjectile(&game->projectile[i], game->projectile[i].position, game->projectile[i].position + (newTarget * 20.0f));
                         }
-                    }           
+                    }               
                 }          
             }
-            for(int j = 0; j < 5; j++)
+            for(int j = 0; j < 49; j++)
             {
                 if(game->enemy[j].life > 0)
                 {

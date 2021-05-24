@@ -4,9 +4,8 @@
 #include "shader.h"
 #include "utility.h"
 #include "input.h"
-#include "camera.h"
 #include "line.h"
-#include "collition.h"
+#include "entities.h"
 
 #define global_variable static
 #define WNDWIDTH 800
@@ -14,29 +13,7 @@
 #define LEFTBUTTON 0
 #define RIGHTBUTTON 1
 
-struct Projectile
-{
-    Vec3 position;
-    Vec3 start;
-    Vec3 end;
-    float speed;
-    float distance;
-    bool impactSomething;
-};
 
-struct Enemy
-{
-    AABB collider;
-    Vec3 position; 
-    int life;
-};
-
-struct Building
-{
-    AABB collider;
-    Vec3 position;
-    Vec3 scale;
-};
 
 struct UI
 {
@@ -60,7 +37,7 @@ struct MainGame
     Mesh colliderMesh;
 
     Mesh naruto;
-    Enemy enemy[5];
+    Enemy enemy[49];
 
     Mesh pistol;
     Mesh ball;
