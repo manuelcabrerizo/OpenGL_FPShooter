@@ -121,7 +121,7 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
         { 
             model = get_scale_matrix({0.01f, 0.01f, 0.01f}) *
                     get_rotation_x_matrix(to_radiant(-90.0f)) *
-                    get_rotation_y_matrix(game->enemy[i].roation) *
+                    get_rotation_y_matrix(game->enemy[i].rotation) *
                     get_translation_matrix(game->enemy[i].position);
             glBindTexture(GL_TEXTURE_2D, game->naruto.texId);
             glBindVertexArray(game->naruto.vao);

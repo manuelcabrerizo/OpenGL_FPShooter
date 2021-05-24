@@ -87,18 +87,21 @@ void ProcessEnemyMovementAndCollition(Enemy* enemies,
                     Vec3 tempVel = {absf(enemyVelocity.x), enemyVelocity.y, absf(enemyVelocity.z)};
                     enemyVelocity += hitNormal * tempVel * (1.0f - t); 
                 }
-            }        
- 
-            Vec3 enemyLookDir = normaliza_vec3(actualEnemy->position - camera->position);
-            Vec3 enemyDefaultDir = {0.0f, 0.0f, -1.0f};
-            Vec3 enemyDefaultDirNorm = normaliza_vec3(enemyDefaultDir);
-            float dotResult = vec3_dot(enemyDefaultDirNorm, enemyLookDir);
-            actualEnemy->roation = acosf(dotResult);
-            if(camera->position.x <= actualEnemy->position.x)
-                actualEnemy->roation = to_radiant(360.0f) - actualEnemy->roation;
+            }
 
-            actualEnemy->position   += (enemyVelocity * 1.5f) * deltaTime;
-            actualEnemy->collider.c += (enemyVelocity * 1.5f) * deltaTime;
+            if(vec3_length(actualEnemy->position - camera->position) < 10.0f &&
+               vec3_length(actualEnemy->position - camera->position) > 1.5f)
+            {  
+                Vec3 enemyDefaultDir = {0.0f, 0.0f, 1.0f};
+                actualEnemy->rotation = acosf(vec3_dot(normaliza_vec3(enemyDefaultDir), normaliza_vec3(enemyVelocity)));
+                if(camera->position.x <= actualEnemy->position.x)
+                {
+                    actualEnemy->rotation = to_radiant(360.0f) - actualEnemy->rotation;
+                }
+                actualEnemy->position   += (enemyVelocity * 1.0f) * deltaTime;
+                actualEnemy->collider.c += (enemyVelocity * 1.0f) * deltaTime;
+            }
+
         }
      }
 }

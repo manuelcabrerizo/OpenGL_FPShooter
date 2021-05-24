@@ -19,7 +19,7 @@ struct Enemy
     AABB collider;
     Vec3 position; 
     int life;
-    float roation;
+    float rotation;
 };
 
 struct Building
