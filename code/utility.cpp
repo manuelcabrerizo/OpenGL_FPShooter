@@ -279,13 +279,27 @@ void LoadOBJFileIndex(Mesh* mesh, const char* filePhat, const char* texFileName)
     mesh->model = get_identity_matrix();
 }
 
+float GetHeightFromHeightMap(float heightMap[], int vertCols, int vertRows, int x, int y)
+{
+    if(x >= vertCols)
+        x = vertCols - 1;
+    if(y >= vertRows)
+        y = vertRows - 1;
+    if(x < 0)
+        x = 0;
+    if(y < 0)
+        y = 0;
+    return heightMap[(y * vertCols) + x];
+}
+
 void GenerateTerrain(Terrain* terrain,
                      int posX,
                      int posZ,
                      int numCols,
                      int numRows,
                      int cellSpacing,
-                     const char* texFileName)
+                     float mapHeigt[],
+                     const char* texFilename)
 {
     // first we need to store space to generate the terrain
     // get the size of the data structures we need
@@ -296,23 +310,40 @@ void GenerateTerrain(Terrain* terrain,
     terrain->numIndex = numTriangles * 3;
     // get a pointer to that memory
     terrain->vertexBuffer = (VertexBuffer*)malloc(numbVertex * sizeof(VertexBuffer));
-    terrain->indexBuffer  = (int*) malloc(terrain->numIndex * sizeof(int));
+    terrain->indexBuffer  = (int*) malloc(terrain->numIndex * sizeof(int)); 
 
     for(int y = 0; y < numRows; y++)
     {
         for(int x = 0; x < numCols; x++)
         {
-
+            float height = GetHeightFromHeightMap(mapHeigt, numCols, numRows, x, y);
             Vec3 vertexPos = {(float)posX + (float)(x * cellSpacing),
-                             0.0f,
+                             height,
                              (float)posZ + (float)(y * cellSpacing)};
-            Vec3 normalPos = {0.0f, 1.0f, 0.0f}; 
             Vec2 texturePos = {(float)x, (float)y};
-
             int index = (y * numCols) + x;
             terrain->vertexBuffer[index].vertice      = vertexPos;
-            terrain->vertexBuffer[index].normal       = normalPos;
             terrain->vertexBuffer[index].textureCoord = texturePos;
+        }
+    }
+
+    // generate the normals
+    for(int y = 0; y < numRows; y++)
+    {
+        for(int x = 0; x < numCols; x++)
+        {
+            // first we need to get the height for tree vertices of our cuad...
+            if(x < numCols - 1 && y < numRows - 1)
+            {
+                float a = GetHeightFromHeightMap(mapHeigt, numCols, numRows, x, y);
+                float b = GetHeightFromHeightMap(mapHeigt, numCols, numRows, x + 1, y);
+                float c = GetHeightFromHeightMap(mapHeigt, numCols, numRows, x, y + 1);
+                Vec3 u = {(float)cellSpacing, b - a, 0.0f}; 
+                Vec3 v = {0.0f, c - a, (float)cellSpacing};
+                Vec3 normal = -normaliza_vec3(vec3_cross(u, v));
+                int index = (y * numCols) + x;
+                terrain->vertexBuffer[index].normal = normal;
+            }
         }
     }
 
@@ -364,7 +395,7 @@ void GenerateTerrain(Terrain* terrain,
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    terrain->tex = LoadBMP(texFileName);
+    terrain->tex = LoadBMP(texFilename);
     if(terrain->tex.pixels != NULL)
     {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, terrain->tex.width, terrain->tex.height,
@@ -470,4 +501,88 @@ void GenerateSkyBox(SkyBox* skyBox)
     glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+}
+
+
+
+void GenerateCube(Cube* cube, const char* texturePath)
+{
+    float cubeVertices[] = 
+    {
+        -1.0f, -1.0f, -1.0f, 0.0f,  0.0f, -1.0f, 0.0f, 0.0f,
+         1.0f, -1.0f, -1.0f, 0.0f,  0.0f, -1.0f, 1.0f, 0.0f,
+         1.0f,  1.0f, -1.0f, 0.0f,  0.0f, -1.0f, 1.0f, 1.0f,
+         1.0f,  1.0f, -1.0f, 0.0f,  0.0f, -1.0f, 1.0f, 1.0f,
+        -1.0f,  1.0f, -1.0f, 0.0f,  0.0f, -1.0f, 0.0f, 1.0f,
+        -1.0f, -1.0f, -1.0f, 0.0f,  0.0f, -1.0f, 0.0f, 0.0f,
+                                               
+        -1.0f, -1.0f,  1.0f, 0.0f,  0.0f,  1.0f, 0.0f, 0.0f,
+         1.0f, -1.0f,  1.0f, 0.0f,  0.0f,  1.0f, 1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f, 0.0f,  0.0f,  1.0f, 1.0f, 1.0f,
+         1.0f,  1.0f,  1.0f, 0.0f,  0.0f,  1.0f, 1.0f, 1.0f,
+        -1.0f,  1.0f,  1.0f, 0.0f,  0.0f,  1.0f, 0.0f, 1.0f,
+        -1.0f, -1.0f,  1.0f, 0.0f,  0.0f,  1.0f, 0.0f, 0.0f,
+                                               
+        -1.0f,  1.0f,  1.0f, 1.0f,  0.0f,  0.0f, 1.0f, 0.0f,
+        -1.0f,  1.0f, -1.0f, 1.0f,  0.0f,  0.0f, 1.0f, 1.0f,
+        -1.0f, -1.0f, -1.0f, 1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
+        -1.0f, -1.0f, -1.0f, 1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
+        -1.0f, -1.0f,  1.0f, 1.0f,  0.0f,  0.0f, 0.0f, 0.0f,
+        -1.0f,  1.0f,  1.0f, 1.0f,  0.0f,  0.0f, 1.0f, 0.0f,
+                                               
+         1.0f,  1.0f,  1.0f, 1.0f,  0.0f,  0.0f, 1.0f, 0.0f,
+         1.0f,  1.0f, -1.0f, 1.0f,  0.0f,  0.0f, 1.0f, 1.0f,
+         1.0f, -1.0f, -1.0f, 1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
+         1.0f, -1.0f, -1.0f, 1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
+         1.0f, -1.0f,  1.0f, 1.0f,  0.0f,  0.0f, 0.0f, 0.0f,
+         1.0f,  1.0f,  1.0f, 1.0f,  0.0f,  0.0f, 1.0f, 0.0f,
+                                               
+        -1.0f, -1.0f, -1.0f, 0.0f, -1.0f,  0.0f, 0.0f, 1.0f,
+         1.0f, -1.0f, -1.0f, 0.0f, -1.0f,  0.0f, 1.0f, 1.0f,
+         1.0f, -1.0f,  1.0f, 0.0f, -1.0f,  0.0f, 1.0f, 0.0f,
+         1.0f, -1.0f,  1.0f, 0.0f, -1.0f,  0.0f, 1.0f, 0.0f,
+        -1.0f, -1.0f,  1.0f, 0.0f, -1.0f,  0.0f, 0.0f, 0.0f,
+        -1.0f, -1.0f, -1.0f, 0.0f, -1.0f,  0.0f, 0.0f, 1.0f,
+                                               
+        -1.0f,  1.0f, -1.0f, 0.0f,  1.0f,  0.0f, 0.0f, 1.0f,
+         1.0f,  1.0f, -1.0f, 0.0f,  1.0f,  0.0f, 1.0f, 1.0f,
+         1.0f,  1.0f,  1.0f, 0.0f,  1.0f,  0.0f, 1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f, 0.0f,  1.0f,  0.0f, 1.0f, 0.0f,
+        -1.0f,  1.0f,  1.0f, 0.0f,  1.0f,  0.0f, 0.0f, 0.0f,
+        -1.0f,  1.0f, -1.0f, 0.0f,  1.0f,  0.0f, 0.0f, 1.0f
+    };
+
+    glGenVertexArrays(1, &cube->vao);
+    glBindVertexArray(cube->vao);
+    unsigned int vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6*sizeof(float)));
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+
+    Texture cubeTexture = LoadBMP(texturePath);
+    unsigned int texture1;
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1);
+    cube->textureID = texture1;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    if(cubeTexture.pixels != NULL)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, cubeTexture.width, cubeTexture.height,
+                                    0, GL_BGRA, GL_UNSIGNED_BYTE, cubeTexture.pixels);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        OutputDebugString("ERROR::LOADING::BMP::FILE\n");
+    }
+    free(cubeTexture.pixels);
 }

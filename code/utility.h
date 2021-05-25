@@ -72,6 +72,13 @@ struct Terrain
     uint32_t texId;
 };
 
+struct Cube
+{
+    unsigned int vao;
+    unsigned int textureID;
+};
+
+
 struct SkyBox
 {
     unsigned int vao;
@@ -89,7 +96,8 @@ void GenerateTerrain(Terrain* terrain,
                      int numCols,
                      int numRows,
                      int cellSpacing,
-                     const char* texFileName);
+                     float mapHeigt[],
+                     const char* texFilename);
 void SkyBoxTextures(SkyBox* skyBox,
                const char* text0,
                const char* text1,
@@ -98,6 +106,8 @@ void SkyBoxTextures(SkyBox* skyBox,
                const char* text4,
                const char* text5);
 void GenerateSkyBox(SkyBox* skyBox);
+void GenerateCube(Cube* cube, const char* texturePath);
+float GetHeightFromHeightMap(float heightMap[], int vertCols, int vertRows, int x, int y);
 
 
 #endif

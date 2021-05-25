@@ -1,7 +1,38 @@
 #include "entities.h"
 #include <math.h>
 
-void ProcessPlayerMovement(Input* input, Camera* camera, Building* buildings, float deltaTime)
+#include "utility.h"
+
+#include <windows.h>
+#include <stdio.h>
+
+float GetEntityHeight(float xPos, float yPos, float mapHeigt[], int numCols, int numRows)
+{  
+    float x = floorf(xPos);
+    float y = floorf(yPos);
+    float dx = xPos - x;
+    float dz = yPos - y; 
+	float A = GetHeightFromHeightMap(mapHeigt, numCols, numRows, x, y);
+	float B = GetHeightFromHeightMap(mapHeigt, numCols, numRows, x + 1, y);
+	float C = GetHeightFromHeightMap(mapHeigt, numCols, numRows, x, y + 1);
+	float D = GetHeightFromHeightMap(mapHeigt, numCols, numRows, x + 1, y + 1);
+	float height = 0.0f;
+	if(dz < 1.0f - dx)  // upper triangle ABC
+	{
+		float uy = B - A; // A->B
+		float vy = C - A; // A->C
+		height = A + LerpFloat(0.0f, uy, dx) + LerpFloat(0.0f, vy, dz);
+	}
+	else // lower triangle DCB
+	{
+		float uy = C - D; // D->C
+		float vy = B - D; // D->B
+		height = D + LerpFloat(0.0f, uy, 1.0f - dx) + LerpFloat(0.0f, vy, 1.0f - dz);
+	}
+	return height;
+}
+
+void ProcessPlayerMovement(Input* input, Camera* camera, Building* buildings, float deltaTime, float mapHeigt[], AABB collider)
 {
     Vec3 playerVelocity = {0.0f, 0.0f, 0.0f};
     if(GetKeyDown(input, 'W'))
@@ -36,16 +67,30 @@ void ProcessPlayerMovement(Input* input, Camera* camera, Building* buildings, fl
 
     float t = 0;
     Vec3 hitPoint  = {0.0f, 0.0f, 0.0f};
-    Vec3 hitNormal = {0.0f, 0.0f, 0.0f}; 
+    Vec3 hitNormal = {0.0f, 0.0f, 0.0f};
+    bool isGrouded = true; 
     for(int i = 0; i < 4; i++)
     {
         if(XZRayIntersectAABB(camera->position, normPlayerVelocity, buildings[i].collider, hitPoint, hitNormal, t) && t <= 1.0f)
         {
-            Vec3 temp = {absf(normPlayerVelocity.x), normPlayerVelocity.y, absf(normPlayerVelocity.z)};
-            normPlayerVelocity += hitNormal * temp * (1.0f - t);
+            if(TestAABBAABB(collider, buildings[i].collider) == 1)
+            {
+                Vec3 temp = {absf(normPlayerVelocity.x), normPlayerVelocity.y, absf(normPlayerVelocity.z)};
+                normPlayerVelocity += hitNormal * temp * (1.0f - t);
+            }
+        } 
+        if(TestOverAABBAABB(collider, buildings[i].collider) == 1 && TestAABBAABB(collider, buildings[i].collider) == 0)
+        {
+            camera->position.y = (buildings[i].collider.c.y + buildings[i].collider.r[1]) + 1.1f;
+            break; 
         }
+        else
+        {
+            camera->position.y = GetEntityHeight(camera->position.x, camera->position.z, mapHeigt, 256, 256) + 1.1f;
+        }
+
     }
-    camera->position += (normPlayerVelocity * 2.0f) * deltaTime; 
+    camera->position += (normPlayerVelocity * 2.0f) * deltaTime;
     camera->viewMat = get_view_matrix(camera->position, camera->position + camera->target, camera->up);  
 }
 
@@ -98,8 +143,8 @@ void ProcessEnemyMovementAndCollition(Enemy* enemies,
                 {
                     actualEnemy->rotation = to_radiant(360.0f) - actualEnemy->rotation;
                 }
-                actualEnemy->position   += (enemyVelocity * 1.0f) * deltaTime;
-                actualEnemy->collider.c += (enemyVelocity * 1.0f) * deltaTime;
+                actualEnemy->position   += (enemyVelocity * 1.5f) * deltaTime;
+                actualEnemy->collider.c += (enemyVelocity * 1.5f) * deltaTime;
             }
 
         }

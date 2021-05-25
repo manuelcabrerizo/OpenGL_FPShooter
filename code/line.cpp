@@ -125,6 +125,10 @@ void DrawPlane(Plane* plane, Matrix model)
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
+float LerpFloat(float a, float b, float t)
+{
+    return a - (a*t) + (b*t);
+}
 
 Vec3 Lerp(Vec3 a, Vec3 b, float t)
 {       

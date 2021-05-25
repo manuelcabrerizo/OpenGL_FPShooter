@@ -29,7 +29,18 @@ struct Building
     Vec3 scale;
 };
 
-void ProcessPlayerMovement(Input* input, Camera* camera, Building* buildings, float deltaTime);
+
+float GetEntityHeight(float xPos,
+                      float yPos,
+                      float heightMap[],
+                      float numCols,
+                      float numRows);
+void ProcessPlayerMovement(Input* input,
+                           Camera* camera,
+                           Building* buildings,
+                           float deltaTime,
+                           float mapHeigt[],
+                           AABB collider);
 void ProcessEnemyMovementAndCollition(Enemy* enemies,
                                       int numEnemies,
                                       Building* buildings,

@@ -30,13 +30,16 @@ struct MainGame
     UI ui; 
     Input input;
     Camera camera;
+    AABB playerCollider;
     Terrain terrain;
+    float mapHeigt[255*255];
     SkyBox skyBox;
     Line xAxis;
     Line yAxis;
     Line zAxis;
    
     Mesh colliderMesh;
+    Cube colliderCube;
 
     Mesh naruto;
     Enemy enemy[49];
@@ -46,7 +49,9 @@ struct MainGame
     Projectile projectile[200];
     AABB     projCollider[200];
 
-    Building buildings[4]; 
+    Building buildings[4];
+    
+
 };
 
 void GameInit(MainGame* game);
