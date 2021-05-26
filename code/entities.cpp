@@ -100,7 +100,7 @@ void ProcessPlayerMovement(Input* input, Camera* camera, Building* buildings, fl
     float playerOverBoxHeight = 0.0f;
     for(int i = 0; i < 4; i++)
     {
-        if(XZRayIntersectAABB(camera->position, normPlayerVelocity, buildings[i].collider, hitPoint, hitNormal, t) && t <= 1.0f)
+        if(XZRayIntersectAABBX(camera->position, normPlayerVelocity, buildings[i].collider, hitPoint, hitNormal, t) && t <= 1.0f)
         {
             if(TestAABBAABB(collider, buildings[i].collider) == 1)
             {
@@ -115,8 +115,8 @@ void ProcessPlayerMovement(Input* input, Camera* camera, Building* buildings, fl
                     normPlayerVelocity += hitNormal * temp * (1.0f - t);
                 }
             }
-        } 
-        if(TestOverAABBAABB(collider, buildings[i].collider) == 1 &&
+        }
+        if(PointOverAABB(collider.c, buildings[i].collider) == 1 &&
            TestAABBAABB(collider, buildings[i].collider) == 0 &&
            collider.c.y - buildings[i].collider.c.y > 0.0f)
         {

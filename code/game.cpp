@@ -86,9 +86,9 @@ void GameInit(MainGame* game)
     for(int i = 0; i < 4; i++)
     {
         game->buildings[i].collider.c = game->buildings[i].position;
-        game->buildings[i].collider.r[0] = game->buildings[i].scale.x; 
+        game->buildings[i].collider.r[0] = game->buildings[i].scale.x + 0.1f; 
         game->buildings[i].collider.r[1] = game->buildings[i].scale.y;
-        game->buildings[i].collider.r[2] = game->buildings[i].scale.z;
+        game->buildings[i].collider.r[2] = game->buildings[i].scale.z + 0.1f;
     }
     
     for(int i = 0; i < 200; i++)
