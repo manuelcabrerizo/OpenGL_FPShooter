@@ -19,7 +19,7 @@ void GameInit(MainGame* game)
     LoadShader(&game->skybox_shader,
             "./code/SkyBoxVertexShader.vert",
             "./code/SkyBoxFragmentShader.frag");
-
+    /*
     // Temoporal::heightMap::Loading::for::the::position::of::the::entities
     Texture mapHeight = LoadBMP("./data/terrain.bmp");
     for(int y = 0; y < 256; y++)
@@ -33,6 +33,13 @@ void GameInit(MainGame* game)
     }
     free(mapHeight.pixels); 
     // --------------------------------------------------------------------
+    */
+    #include "constants.h"
+    for(int i = 0; i < 50*50; i++)
+    {
+        game->mapHeigt[i] = heights[i];
+    }
+    
 
     // Create Boths of our PROJECTION MATRIX...
     Matrix proj = get_projection_perspective_matrix(to_radiant(90), WNDWIDTH/WNDHEIGHT, 0.1f, 100.0f);
@@ -63,7 +70,7 @@ void GameInit(MainGame* game)
                    "./data/skybox/ForestBack.bmp"); 
     GenerateSkyBox(&game->skyBox);
     GenerateCube(&game->colliderCube, "./data/mud.bmp");
-    GenerateTerrain(&game->terrain, 0, 0, 256, 256, 1, game->mapHeigt,"./data/grass0.bmp");
+    GenerateTerrain(&game->terrain, -25, -25, 50, 50, 1, game->mapHeigt,"./data/grass0.bmp");
     LoadOBJFileIndex(&game->pistol, "./data/weapon.obj", "./data/weapon.bmp");
     LoadOBJFileIndex(&game->ball, "./data/bullet.obj", "./data/wall.bmp");
     LoadOBJFileIndex(&game->naruto, "./data/naruto.obj", "./data/naruto.bmp");
@@ -203,14 +210,14 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
         //glDrawArrays(GL_TRIANGLES, 0, 36);
         glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);
     }
-
+    /*
     glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
     glBindTexture(GL_TEXTURE_2D, game->colliderMesh.texId);
     model = get_scale_matrix({0.3f, 1.0f, 0.3f}) * get_translation_matrix(game->playerCollider.c);
     SetShaderMatrix(model, game->mesh_shader.worldMatLoc);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);
-    
+    */
     model = get_identity_matrix();
     glBindTexture(GL_TEXTURE_2D, game->terrain.texId);
     glBindVertexArray(game->terrain.vao);

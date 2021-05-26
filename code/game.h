@@ -32,7 +32,7 @@ struct MainGame
     Camera camera;
     AABB playerCollider;
     Terrain terrain;
-    float mapHeigt[255*255];
+    float mapHeigt[50*50];
     SkyBox skyBox;
     Line xAxis;
     Line yAxis;

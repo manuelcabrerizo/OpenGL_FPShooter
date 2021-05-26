@@ -10,7 +10,9 @@
 #define JUMP_POWER 0.06
 
 float GetEntityHeight(float xPos, float yPos, float mapHeigt[], int numCols, int numRows)
-{  
+{ 
+    xPos += 25;
+    yPos += 25; 
     float x = floorf(xPos);
     float y = floorf(yPos);
     float dx = xPos - x;
@@ -126,7 +128,7 @@ void ProcessPlayerMovement(Input* input, Camera* camera, Building* buildings, fl
     }
     
     float playerHeight = 0.0f;
-    if(isGrouded) playerHeight = GetEntityHeight(camera->position.x, camera->position.z, mapHeigt, 256, 256) + 1.1f;
+    if(isGrouded) playerHeight = GetEntityHeight(camera->position.x, camera->position.z, mapHeigt, 50, 50) + 1.1f;
     else playerHeight = playerOverBoxHeight;   
     if(camera->position.y > playerHeight) camera->isJumping = true;
     ProcessPlayerJump(playerHeight, 1.0f, camera);
