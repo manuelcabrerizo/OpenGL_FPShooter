@@ -76,15 +76,26 @@ void ProcessPlayerMovement(Input* input, Camera* camera, Building* buildings, fl
             if(TestAABBAABB(collider, buildings[i].collider) == 1)
             {
                 Vec3 temp = {absf(normPlayerVelocity.x), normPlayerVelocity.y, absf(normPlayerVelocity.z)};
-                normPlayerVelocity += hitNormal * temp * (1.0f - t);
+
+                if((temp.x == 0 && temp.y == 0 && temp.z == 0) ||
+                    (hitNormal.x == 0 && hitNormal.y == 0 && hitNormal.z == 0))
+                {
+                    normPlayerVelocity = {0.0f, 0.0f, 0.0f};
+                }
+                else
+                {
+                    normPlayerVelocity += hitNormal * temp * (1.0f - t);
+                }
             }
         } 
-        if(TestOverAABBAABB(collider, buildings[i].collider) == 1 && TestAABBAABB(collider, buildings[i].collider) == 0)
+        if(TestOverAABBAABB(collider, buildings[i].collider) == 1 && TestAABBAABB(collider, buildings[i].collider) == 0 &&
+           collider.c.y - buildings[i].collider.c.y > 0)
         {
             camera->position.y = (buildings[i].collider.c.y + buildings[i].collider.r[1]) + 1.1f;
-            break; 
+            isGrouded = false; 
         }
-        else
+        
+        if(isGrouded)
         {
             camera->position.y = GetEntityHeight(camera->position.x, camera->position.z, mapHeigt, 256, 256) + 1.1f;
         }
