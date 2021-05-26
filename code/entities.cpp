@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 #define GRAVITY 0.001
-#define JUMP_POWER 0.07
+#define JUMP_POWER 0.06
 
 float GetEntityHeight(float xPos, float yPos, float mapHeigt[], int numCols, int numRows)
 {  
@@ -96,7 +96,8 @@ void ProcessPlayerMovement(Input* input, Camera* camera, Building* buildings, fl
     float t = 0;
     Vec3 hitPoint  = {0.0f, 0.0f, 0.0f};
     Vec3 hitNormal = {0.0f, 0.0f, 0.0f};
-    bool isGrouded = true; 
+    bool isGrouded = true;
+    float playerOverBoxHeight = 0.0f;
     for(int i = 0; i < 4; i++)
     {
         if(XZRayIntersectAABB(camera->position, normPlayerVelocity, buildings[i].collider, hitPoint, hitNormal, t) && t <= 1.0f)
@@ -104,7 +105,6 @@ void ProcessPlayerMovement(Input* input, Camera* camera, Building* buildings, fl
             if(TestAABBAABB(collider, buildings[i].collider) == 1)
             {
                 Vec3 temp = {absf(normPlayerVelocity.x), normPlayerVelocity.y, absf(normPlayerVelocity.z)};
-
                 if((temp.x == 0 && temp.y == 0 && temp.z == 0) ||
                     (hitNormal.x == 0 && hitNormal.y == 0 && hitNormal.z == 0))
                 {
@@ -115,21 +115,21 @@ void ProcessPlayerMovement(Input* input, Camera* camera, Building* buildings, fl
                     normPlayerVelocity += hitNormal * temp * (1.0f - t);
                 }
             }
-        }
-          
-        if(TestOverAABBAABB(collider, buildings[i].collider) == 1 && TestAABBAABB(collider, buildings[i].collider) == 0 &&
-           collider.c.y - buildings[i].collider.c.y > 0)
-        {
-            float playerHeight = (buildings[i].collider.c.y + buildings[i].collider.r[1]) + 1.1f;
-            ProcessPlayerJump(playerHeight, 1.0f, camera);
-            isGrouded = false; 
         } 
-        if(isGrouded)
+        if(TestOverAABBAABB(collider, buildings[i].collider) == 1 &&
+           TestAABBAABB(collider, buildings[i].collider) == 0 &&
+           collider.c.y - buildings[i].collider.c.y > 0.0f)
         {
-            float playerHeight = GetEntityHeight(camera->position.x, camera->position.z, mapHeigt, 256, 256) + 1.1f;
-            ProcessPlayerJump(playerHeight, 4.0f, camera);
+            playerOverBoxHeight = (buildings[i].collider.c.y + buildings[i].collider.r[1]) + 1.1f;
+            isGrouded = false;
         }
     }
+    
+    float playerHeight = 0.0f;
+    if(isGrouded) playerHeight = GetEntityHeight(camera->position.x, camera->position.z, mapHeigt, 256, 256) + 1.1f;
+    else playerHeight = playerOverBoxHeight;   
+    if(camera->position.y > playerHeight) camera->isJumping = true;
+    ProcessPlayerJump(playerHeight, 1.0f, camera);
     camera->position += (normPlayerVelocity * 2.0f) * deltaTime;
     camera->viewMat = get_view_matrix(camera->position, camera->position + camera->target, camera->up);  
 }

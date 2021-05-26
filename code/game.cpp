@@ -71,17 +71,17 @@ void GameInit(MainGame* game)
 
 
     game->playerCollider.c = game->camera.position;
-    game->playerCollider.r[0] = 0.5f; 
+    game->playerCollider.r[0] = 0.3f; 
     game->playerCollider.r[1] = 1.0f;
-    game->playerCollider.r[2] = 0.5f;
+    game->playerCollider.r[2] = 0.3f;
 
     game->buildings[0].position = {10.0f, 1.0f, 10.0f};
     game->buildings[1].position = {-10.0f, 3.0f, -7.0f};
-    game->buildings[2].position = {0.0f, 5.0f, 15.0f};
+    game->buildings[2].position = {0.0f, 2.0f, 15.0f};
     game->buildings[3].position = {-16.0f, 4.0f, 9.0f};
     game->buildings[0].scale = {4.0f, 1.0f, 2.0f};
     game->buildings[1].scale = {6.0f, 3.0f, 4.0f};
-    game->buildings[2].scale = {6.0f, 2.0f, 6.0f};
+    game->buildings[2].scale = {6.0f, 1.5f, 6.0f};
     game->buildings[3].scale = {5.0f, 4.0f, 2.0f};
     for(int i = 0; i < 4; i++)
     {
@@ -206,7 +206,7 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
 
     glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
     glBindTexture(GL_TEXTURE_2D, game->colliderMesh.texId);
-    model = get_scale_matrix({0.5f, 1.0f, 0.5f}) * get_translation_matrix(game->playerCollider.c);
+    model = get_scale_matrix({0.3f, 1.0f, 0.3f}) * get_translation_matrix(game->playerCollider.c);
     SetShaderMatrix(model, game->mesh_shader.worldMatLoc);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);

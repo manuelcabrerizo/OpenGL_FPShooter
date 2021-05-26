@@ -17,6 +17,14 @@ int TestOverAABBAABB(AABB a, AABB b)
     return 1; 
 }
 
+int PointOverAABB(Vec3 p, AABB aabb)
+{
+    if(absf(p.x - aabb.c.x) > aabb.r[0]) return 0;
+    if(absf(p.z - aabb.c.z) > aabb.r[2]) return 0;
+    return 1; 
+}
+
+
 int XZRayIntersectAABB(Vec3 v, Vec3 d, AABB target, Vec3& contactPoint, Vec3& contactNormal, float& tHitNear)
 {
     float targetX = (target.c.x - target.r[0]) - 0.1f;
