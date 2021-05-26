@@ -18,6 +18,8 @@ struct Camera
     Matrix viewMat;
     float pitch;
     float yaw;
+    bool isJumping;
+    float jumpPower;
 };
 
 void InitializeCamera(Camera* camera);
