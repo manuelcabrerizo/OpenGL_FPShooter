@@ -33,5 +33,10 @@ Matrix ProcessPlayerWeapon(Weapon* weapon,
                            Input* input,
                            float deltaTime);
 
+void ProcessPlayerProjectiles(Player* player,
+                              Building* buildings,
+                              Enemy* enemy, 
+                              float deltaTime);
+
 #endif
 

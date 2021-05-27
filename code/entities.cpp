@@ -88,6 +88,10 @@ void ProcessEnemyMovementAndCollition(Enemy* enemies,
                 actualEnemy->collider.c += (enemyVelocity * 1.5f) * deltaTime;
             }
 
+            actualEnemy->model = get_scale_matrix({0.01f, 0.01f, 0.01f}) *
+                                 get_rotation_x_matrix(to_radiant(-90.0f)) *
+                                 get_rotation_y_matrix(actualEnemy->rotation) *
+                                 get_translation_matrix(actualEnemy->position);
         }
      }
 }

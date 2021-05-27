@@ -155,3 +155,52 @@ Matrix ProcessPlayerWeapon(Weapon* weapon,
     return pistolModel;
 }
 
+
+void ProcessPlayerProjectiles(Player* player,
+                              Building* buildings,
+                              Enemy* enemy, 
+                              float deltaTime)
+{
+    for(int i = 0 ; i < 200; i++)
+    {
+        Projectile* actualProjectile = &player->weapon.projectile[i];
+        AABB* actualProjCollider = &player->weapon.projCollider[i];
+
+        actualProjectile->model = get_scale_matrix({0.05f, 0.05f, 0.05f}) * UpdateProjectile(actualProjectile, deltaTime);
+        actualProjCollider->c = actualProjectile->position;
+        if(actualProjectile->distance <= 1.0f && actualProjectile->impactSomething == false)
+        {
+            float t = 0;
+            Vec3 hitPoint  = {0.0f, 0.0f, 0.0f};
+            Vec3 hitNormal = {0.0f, 0.0f, 0.0f}; 
+            for(int j = 0; j < 4; j++)
+            {
+                Vec3 direction = actualProjectile->end - actualProjectile->start;
+                if(XZRayIntersectAABBX(actualProjectile->start, direction, buildings[j].collider, hitPoint, hitNormal, t) == 1 && t >= 0.0f && t <= 1.0f)
+                { 
+                    if(actualProjectile->distance > t)
+                    {
+                        if(TestAABBAABB(*actualProjCollider, buildings[j].collider) == 1 && actualProjectile->impactSomething == false)
+                        {
+                            Vec3 newTarget = normaliza_vec3(Vec3Reflect(actualProjectile->start, actualProjectile->end, hitNormal));
+                            ShootProjectile(actualProjectile, actualProjectile->position, actualProjectile->position + (newTarget * 20.0f));
+                        }
+                    }               
+                }          
+            }
+            for(int j = 0; j < 49; j++)
+            {
+                if(enemy[j].life > 0)
+                {
+                    if(TestAABBAABB(*actualProjCollider, enemy[j].collider) == 1 && actualProjectile->impactSomething == false)
+                    {
+                        enemy[j].life--;
+                        actualProjectile->impactSomething = true;
+                    }
+                }
+            }
+        }
+    }
+
+}
+

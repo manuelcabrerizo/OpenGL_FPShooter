@@ -75,14 +75,15 @@ void GameInit(MainGame* game)
     game->buildings[1].scale = {6.0f, 3.0f, 4.0f};
     game->buildings[2].scale = {6.0f, 1.5f, 6.0f};
     game->buildings[3].scale = {5.0f, 4.0f, 2.0f};
+
     for(int i = 0; i < 4; i++)
     {
         game->buildings[i].collider.c = game->buildings[i].position;
         game->buildings[i].collider.r[0] = game->buildings[i].scale.x + 0.1f; 
         game->buildings[i].collider.r[1] = game->buildings[i].scale.y;
         game->buildings[i].collider.r[2] = game->buildings[i].scale.z + 0.1f;
-        
         game->buildings[i].model = get_scale_matrix(game->buildings[i].scale) * get_translation_matrix(game->buildings[i].position);
+        game->buildingsModels[i] = &game->buildings[i].model;
     }
     
     for(int i = 0; i < 200; i++)
@@ -122,50 +123,12 @@ void GameInit(MainGame* game)
     }
     
     game->terrainModels[0] = &game->terrain.model; 
-    PushToRender(game->terrain.vao,
-                 game->terrain.texId,
-                 1,
-                 game->terrain.numIndex,
-                 true,
-                 game->mesh_shader,
-                 game->terrainModels);
-
-    for(int i = 0; i < 4; i++)
-    {
-        game->buildingsModels[i] = &game->buildings[i].model;
-    } 
-    PushToRender(game->colliderCube.vao,
-                 game->colliderCube.textureID,
-                 4,
-                 36,
-                 false,
-                 game->mesh_shader,
-                 game->buildingsModels);
-
     game->weaponModel[0] =  &game->player.weapon.model;
-    PushToRender(game->pistol.vao,
-                 game->pistol.texId,
-                 1,
-                 game->pistol.numIndex * 3,
-                 true,
-                 game->mesh_shader,
-                 game->weaponModel);
-
-    PushToRender(game->ball.vao,
-                 game->ball.texId,
-                 200,
-                 game->ball.numIndex * 3,
-                 true,
-                 game->mesh_shader,
-                 game->projectileModels);
-
-    PushToRender(game->naruto.vao,
-                 game->naruto.texId,
-                 49,
-                 game->naruto.numIndex * 3,
-                 true,
-                 game->mesh_shader,
-                 game->enemiesModels);     
+    PushToRender(game->terrain.vao, game->terrain.texId, 1, game->terrain.numIndex, true, game->mesh_shader, game->terrainModels);
+    PushToRender(game->colliderCube.vao, game->colliderCube.textureID, 4, 36, false, game->mesh_shader, game->buildingsModels);
+    PushToRender(game->pistol.vao, game->pistol.texId, 1, game->pistol.numIndex * 3, true, game->mesh_shader, game->weaponModel);
+    PushToRender(game->ball.vao, game->ball.texId, 200, game->ball.numIndex * 3, true, game->mesh_shader, game->projectileModels);
+    PushToRender(game->naruto.vao, game->naruto.texId, 49, game->naruto.numIndex * 3, true, game->mesh_shader, game->enemiesModels);     
 }
 
 void GameUnpdateAndRender(MainGame* game, float deltaTime)
@@ -175,63 +138,14 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     ProcessPlayerMovementTest(&game->player, &game->input, deltaTime);
     ProcessPlayerCollitions(&game->player, game->buildings, game->mapHeigt, deltaTime);
     ProcessEnemyMovementAndCollition(game->enemy, 49, game->buildings, 4, &game->player.camera, deltaTime);
+    ProcessPlayerProjectiles(&game->player, game->buildings, game->enemy, deltaTime);
     game->player.weapon.model = ProcessPlayerWeapon(&game->player.weapon, &game->player.camera, &game->input, deltaTime);
+    
     UseShader(&game->mesh_shader);
     SetShaderMatrix(game->player.camera.viewMat, game->mesh_shader.viewMatLoc);
     UseShader(&game->main_shader);
     SetShaderMatrix(game->player.camera.viewMat, game->main_shader.viewMatLoc);
-    
-    for(int i = 0; i < 49; i++)
-    {
-        if(game->enemy[i].life > 0)
-        { 
-            game->enemy[i].model = get_scale_matrix({0.01f, 0.01f, 0.01f}) *
-                                   get_rotation_x_matrix(to_radiant(-90.0f)) *
-                                   get_rotation_y_matrix(game->enemy[i].rotation) *
-                                   get_translation_matrix(game->enemy[i].position);
-        }
-    }
-    
-    for(int i = 0 ; i < 200; i++)
-    {
-        Projectile* actualProjectile = &game->player.weapon.projectile[i];
-        AABB* actualProjCollider = &game->player.weapon.projCollider[i];
 
-        game->player.weapon.projectile[i].model = get_scale_matrix({0.05f, 0.05f, 0.05f}) * UpdateProjectile(actualProjectile, deltaTime);
-        actualProjCollider->c = actualProjectile->position;
-        if(actualProjectile->distance <= 1.0f && actualProjectile->impactSomething == false)
-        {
-            float t = 0;
-            Vec3 hitPoint  = {0.0f, 0.0f, 0.0f};
-            Vec3 hitNormal = {0.0f, 0.0f, 0.0f}; 
-            for(int j = 0; j < 4; j++)
-            {
-                Vec3 direction = actualProjectile->end - actualProjectile->start;
-                if(XZRayIntersectAABBX(actualProjectile->start, direction, game->buildings[j].collider, hitPoint, hitNormal, t) == 1 && t >= 0.0f && t <= 1.0f)
-                { 
-                    if(actualProjectile->distance > t)
-                    {
-                        if(TestAABBAABB(*actualProjCollider, game->buildings[j].collider) == 1 && actualProjectile->impactSomething == false)
-                        {
-                            Vec3 newTarget = normaliza_vec3(Vec3Reflect(actualProjectile->start, actualProjectile->end, hitNormal));
-                            ShootProjectile(actualProjectile, actualProjectile->position, actualProjectile->position + (newTarget * 20.0f));
-                        }
-                    }               
-                }          
-            }
-            for(int j = 0; j < 49; j++)
-            {
-                if(game->enemy[j].life > 0)
-                {
-                    if(TestAABBAABB(*actualProjCollider, game->enemy[j].collider) == 1 && actualProjectile->impactSomething == false)
-                    {
-                        game->enemy[j].life--;
-                        actualProjectile->impactSomething = true;
-                    }
-                }
-            }
-        }
-    }
     // Render...   
     // UI STAFF...
     float xPos = (float)WNDWIDTH  / 2.0f;
