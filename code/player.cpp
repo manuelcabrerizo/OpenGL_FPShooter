@@ -1,6 +1,11 @@
 
 #include "player.h"
 
+#include <math.h>
+
+#define LEFTBUTTON 0
+#define RIGHTBUTTON 1
+
 void ProcessPlayerJumpTest(Player* player, float playerHeight)
 {
     if(player->isJumping)
@@ -108,5 +113,45 @@ void ProcessPlayerCollitions(Player* player,
     player->camera.viewMat = get_view_matrix(player->camera.position,
                                       player->camera.position + player->camera.target,
                                       player->camera.up);
+}
+
+Matrix ProcessPlayerWeapon(Weapon* weapon,
+                           Camera* camera,
+                           Input* input,
+                           float deltaTime)
+{
+    Vec3 zOffset = normaliza_vec3(camera->target);
+    Vec3 xOffset = normaliza_vec3(camera->right);
+    Vec3 pistolFinalPos = camera->position + zOffset*0.2f + xOffset*0.05f; 
+    if(camera->isMoving == true)
+    {  
+        static float time = 0.0f;
+        pistolFinalPos.y = pistolFinalPos.y + sinf(time) / 50.0f;
+        time += deltaTime * 15.0f;
+    } 
+    weapon->position = pistolFinalPos;
+    Matrix pistolPos = get_translation_matrix(pistolFinalPos);
+    Matrix pistolRot = get_rotation_y_matrix(-to_radiant(camera->yaw + -90.0f)) *
+                       get_rotation_arbitrary_matrix(xOffset, to_radiant(camera->pitch));
+    Matrix pistolModel = get_scale_matrix({0.01f, 0.01f, 0.01f}) * pistolRot * pistolPos;
+
+    // START::PROCCESING::OUR::PROJECTILE::STUFF...
+    static bool mouseLButtonPress = false;
+    static int actualProjectile   = 0;
+    if((GetMouseButtonPress(input, LEFTBUTTON) || input->A == true) && mouseLButtonPress == false)
+    { 
+        Vec3 bulletPos = weapon->position;
+        bulletPos.y -= 0.03f;
+        ShootProjectile(&weapon->projectile[actualProjectile], bulletPos, camera->position + (normaliza_vec3(camera->target) * 20.0f));
+        mouseLButtonPress = true;
+        actualProjectile++;
+    }
+    if((!GetMouseButtonPress(input, LEFTBUTTON) && input->A == false) && mouseLButtonPress == true)
+    {
+        mouseLButtonPress = false;
+    }
+    actualProjectile %= 200;
+
+    return pistolModel;
 }
 

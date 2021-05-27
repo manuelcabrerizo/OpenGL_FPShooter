@@ -28,5 +28,10 @@ void ProcessPlayerCollitions(Player* player,
                              float mapHeigt[],
                              float deltaTime);
 
+Matrix ProcessPlayerWeapon(Weapon* weapon,
+                           Camera* camera,
+                           Input* input,
+                           float deltaTime);
+
 #endif
 

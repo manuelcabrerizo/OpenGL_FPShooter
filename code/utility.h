@@ -70,6 +70,7 @@ struct Terrain
     int numIndex;
     Texture tex;
     uint32_t texId;
+    Matrix model;
 };
 
 struct Cube

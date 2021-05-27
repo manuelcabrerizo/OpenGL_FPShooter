@@ -14,7 +14,6 @@
 #define RIGHTBUTTON 1
 
 
-
 struct UI
 {
     Line xAxis;
@@ -29,29 +28,30 @@ struct MainGame
     Shader skybox_shader; 
     UI ui; 
     Input input;
+    
     //Camera camera;
     //AABB playerCollider;
     Terrain terrain;
+    Matrix* terrainModels[1];
     float mapHeigt[50*50];
     SkyBox skyBox;
-    Line xAxis;
-    Line yAxis;
-    Line zAxis;
     
     // new Player test...
     Player player;
+    Matrix* weaponModel[1];
+    Matrix* projectileModels[200];
    
     Mesh colliderMesh;
     Cube colliderCube;
 
     Mesh naruto;
     Enemy enemy[49];
+    Matrix* enemiesModels[49];
 
     Mesh pistol;
     Mesh ball;
-    Projectile projectile[200];
-    AABB     projCollider[200];
 
+    Matrix* buildingsModels[4];
     Building buildings[4];
     
 

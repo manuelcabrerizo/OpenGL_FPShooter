@@ -308,6 +308,7 @@ void GenerateTerrain(Terrain* terrain,
     int numCellCols   = numCols - 1;
     int numTriangles  = 2 * (numCellRows * numCellCols);
     terrain->numIndex = numTriangles * 3;
+    terrain->model = get_identity_matrix();
     // get a pointer to that memory
     terrain->vertexBuffer = (VertexBuffer*)malloc(numbVertex * sizeof(VertexBuffer));
     terrain->indexBuffer  = (int*) malloc(terrain->numIndex * sizeof(int)); 

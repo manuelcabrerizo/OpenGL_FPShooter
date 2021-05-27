@@ -22,6 +22,7 @@ struct Projectile
     float speed;
     float distance;
     bool impactSomething;
+    Matrix model;
 };
 
 struct Enemy
@@ -30,6 +31,7 @@ struct Enemy
     Vec3 position; 
     int life;
     float rotation;
+    Matrix model;
 };
 
 struct Building
@@ -37,16 +39,15 @@ struct Building
     AABB collider;
     Vec3 position;
     Vec3 scale;
+    Matrix model;
 };
 
 struct Weapon
 {
-    unsigned int wVao;
-    unsigned int pVao;
-    unsigned int wTexId;
-    unsigned int pTexId;
+    Vec3 position;
     Projectile projectile[200];
     AABB     projCollider[200];
+    Matrix model;
 };
 
 float GetEntityHeight(float xPos,
