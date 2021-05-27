@@ -5,7 +5,7 @@
 #include "utility.h"
 #include "input.h"
 #include "line.h"
-#include "entities.h"
+#include "player.h"
 
 #define global_variable static
 #define WNDWIDTH 800
@@ -29,14 +29,17 @@ struct MainGame
     Shader skybox_shader; 
     UI ui; 
     Input input;
-    Camera camera;
-    AABB playerCollider;
+    //Camera camera;
+    //AABB playerCollider;
     Terrain terrain;
     float mapHeigt[50*50];
     SkyBox skyBox;
     Line xAxis;
     Line yAxis;
     Line zAxis;
+    
+    // new Player test...
+    Player player;
    
     Mesh colliderMesh;
     Cube colliderCube;

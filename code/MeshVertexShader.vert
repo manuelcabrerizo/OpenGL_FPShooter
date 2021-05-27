@@ -11,7 +11,7 @@ out vec2 ourColor;
 out vec3 normal;
 out float visibility;
 
-const float density = 0.06;
+const float density = 0.03;
 const float gradient = 1.5;
 
 void main()

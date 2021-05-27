@@ -53,7 +53,8 @@ void GameInit(MainGame* game)
     SetShaderMatrix(proj, game->main_shader.projMatLoc);
     UseShader(&game->mesh_shader);
     SetShaderMatrix(proj, game->mesh_shader.projMatLoc);
-    InitializeCamera(&game->camera);
+    
+    InitializeCamera(&game->player.camera);
 
     game->ui.xAxis = GenLine({-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 1.0f}, &game->ui.shader);
     game->ui.yAxis = GenLine({0.0f, -1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 1.0f}, &game->ui.shader);
@@ -77,14 +78,19 @@ void GameInit(MainGame* game)
     LoadOBJFileIndex(&game->colliderMesh, "./data/collider.obj", "./data/pistol.bmp");
 
 
-    game->playerCollider.c = game->camera.position;
-    game->playerCollider.r[0] = 0.3f; 
-    game->playerCollider.r[1] = 1.0f;
-    game->playerCollider.r[2] = 0.3f;
+    //game->playerCollider.c = game->camera.position;
+    //game->playerCollider.r[0] = 0.3f; 
+    //game->playerCollider.r[1] = 1.0f;
+    //game->playerCollider.r[2] = 0.3f;
+
+    game->player.transform.collider.c = game->player.transform.position;
+    game->player.transform.collider.r[0] = 0.3f; 
+    game->player.transform.collider.r[1] = 1.0f;
+    game->player.transform.collider.r[2] = 0.3f;
 
     game->buildings[0].position = {10.0f, 1.0f, 10.0f};
     game->buildings[1].position = {-10.0f, 3.0f, -7.0f};
-    game->buildings[2].position = {0.0f, 2.0f, 15.0f};
+    game->buildings[2].position = {2.0f, 2.0f, 15.0f};
     game->buildings[3].position = {-16.0f, 4.0f, 9.0f};
     game->buildings[0].scale = {4.0f, 1.0f, 2.0f};
     game->buildings[1].scale = {6.0f, 3.0f, 4.0f};
@@ -134,17 +140,19 @@ void GameInit(MainGame* game)
 void GameUnpdateAndRender(MainGame* game, float deltaTime)
 {
     // Update...
-    UpdateCamera(&game->camera, &game->input, deltaTime);
-    game->playerCollider.c = game->camera.position;
-    ProcessPlayerMovement(&game->input, &game->camera, game->buildings, deltaTime, game->mapHeigt, game->playerCollider);
-    ProcessEnemyMovementAndCollition(game->enemy, 49, game->buildings, 4, &game->camera, deltaTime);
+    //UpdateCamera(&game->camera, &game->input, deltaTime);
+    //game->playerCollider.c = game->camera.position;
+    //ProcessPlayerMovement(&game->input, &game->camera, game->buildings, deltaTime, game->mapHeigt, game->playerCollider);
+    //ProcessEnemyMovementAndCollition(game->enemy, 49, game->buildings, 4, &game->camera, deltaTime);
     
-
+    UpdateCamera(&game->player.camera, &game->input, deltaTime);
+    ProcessPlayerMovementTest(&game->player, &game->input, deltaTime);
+    ProcessPlayerCollitions(&game->player, game->buildings, game->mapHeigt, deltaTime);
 
     // SKYBOX DRAW TESTING:::::THIS CAN BE BADD...
     glDepthMask(GL_FALSE);
     UseShader(&game->skybox_shader);
-    Matrix SkyBoxView = to_4x4_matrix(to_3x3_matrix(game->camera.viewMat));
+    Matrix SkyBoxView = to_4x4_matrix(to_3x3_matrix(game->player.camera.viewMat));
     SetShaderMatrix(SkyBoxView, game->skybox_shader.viewMatLoc);
     Matrix SkyBoxWorld = get_identity_matrix();
     SetShaderMatrix(SkyBoxWorld, game->skybox_shader.worldMatLoc);
@@ -154,9 +162,9 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     glDepthMask(GL_TRUE);
 
     UseShader(&game->main_shader);
-    SetShaderMatrix(game->camera.viewMat, game->main_shader.viewMatLoc);
+    SetShaderMatrix(game->player.camera.viewMat, game->main_shader.viewMatLoc);
     UseShader(&game->mesh_shader);
-    SetShaderMatrix(game->camera.viewMat, game->mesh_shader.viewMatLoc);
+    SetShaderMatrix(game->player.camera.viewMat, game->mesh_shader.viewMatLoc);
     // Render...   
     // UI STAFF...
     float xPos = (float)WNDWIDTH  / 2.0f;
@@ -227,11 +235,11 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     glBindVertexArray(game->pistol.vao);
     glBindTexture(GL_TEXTURE_2D, game->pistol.texId);
     
-    Vec3 zOffset = normaliza_vec3(game->camera.target);
-    Vec3 xOffset = normaliza_vec3(game->camera.right);
-    Vec3 pistolFinalPos = game->camera.position + zOffset*0.2f + xOffset*0.05f; 
+    Vec3 zOffset = normaliza_vec3(game->player.camera.target);
+    Vec3 xOffset = normaliza_vec3(game->player.camera.right);
+    Vec3 pistolFinalPos = game->player.camera.position + zOffset*0.2f + xOffset*0.05f; 
 
-    if(game->camera.isMoving == true)
+    if(game->player.camera.isMoving == true)
     {  
         static float time = 0.0f;
         pistolFinalPos.y = pistolFinalPos.y + sinf(time) / 50.0f;
@@ -239,8 +247,8 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     } 
     
     Matrix pistolPos = get_translation_matrix(pistolFinalPos);
-    Matrix pistolRot = get_rotation_y_matrix(-to_radiant(game->camera.yaw + -90.0f)) *
-                       get_rotation_arbitrary_matrix(xOffset, to_radiant(game->camera.pitch));
+    Matrix pistolRot = get_rotation_y_matrix(-to_radiant(game->player.camera.yaw + -90.0f)) *
+                       get_rotation_arbitrary_matrix(xOffset, to_radiant(game->player.camera.pitch));
     Matrix pistolModel = get_scale_matrix({0.01f, 0.01f, 0.01f}) * pistolRot * pistolPos;
 
 
@@ -254,7 +262,7 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     { 
         Vec3 bulletPos = pistolFinalPos;
         bulletPos.y -= 0.03f;
-        ShootProjectile(&game->projectile[actualProjectile], bulletPos, game->camera.position + (normaliza_vec3(game->camera.target) * 20.0f));
+        ShootProjectile(&game->projectile[actualProjectile], bulletPos, game->player.camera.position + (normaliza_vec3(game->player.camera.target) * 20.0f));
         mouseLButtonPress = true;
         actualProjectile++;
     }

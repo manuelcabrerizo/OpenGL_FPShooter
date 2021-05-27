@@ -8,7 +8,7 @@ uniform mat4 Proj;
 uniform mat4 View;
 uniform mat4 World;
 
-const float density = 0.3;
+const float density = 0.2;
 const float gradient = 1.5;
 
 void main()
