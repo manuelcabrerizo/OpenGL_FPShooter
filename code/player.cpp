@@ -200,6 +200,11 @@ void ProcessPlayerProjectiles(Player* player,
                 }
             }
         }
+
+        if(actualProjectile->impactSomething || actualProjectile->distance > 1.0f)
+        {
+            actualProjectile->shouldRender = false;
+        }
     }
 
 }

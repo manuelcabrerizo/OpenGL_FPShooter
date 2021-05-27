@@ -71,6 +71,7 @@ struct Terrain
     Texture tex;
     uint32_t texId;
     Matrix model;
+    bool shouldRender;
 };
 
 struct Cube

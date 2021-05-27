@@ -13,6 +13,7 @@ struct RenderUnit
     bool haveIndices;
     Shader shader;
     Matrix** model;
+    bool** shouldRender;
 };
 
 void PushToRender(unsigned int vao,
@@ -21,7 +22,8 @@ void PushToRender(unsigned int vao,
                   int numberOfVerteces,
                   bool haveIndices,
                   Shader shader,
-                  Matrix* model[]);
+                  Matrix* model[],
+                  bool* shouldRender[]);
 void RenderRendererBuffer();
 void ClearRendererBuffer();
 

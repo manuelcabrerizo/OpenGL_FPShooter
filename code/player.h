@@ -13,6 +13,7 @@ struct Player
     Weapon weapon;
     bool isJumping;
     float jumpPower;
+    bool shouldRender;
 };
 
 

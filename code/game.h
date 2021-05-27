@@ -33,13 +33,17 @@ struct MainGame
     //AABB playerCollider;
     Terrain terrain;
     Matrix* terrainModels[1];
+    bool* terrainShouldRender[1];
+
     float mapHeigt[50*50];
     SkyBox skyBox;
     
     // new Player test...
     Player player;
     Matrix* weaponModel[1];
+    bool* weaponShouldRender[1];
     Matrix* projectileModels[200];
+    bool* projectileShouldRender[200];
    
     Mesh colliderMesh;
     Cube colliderCube;
@@ -47,10 +51,12 @@ struct MainGame
     Mesh naruto;
     Enemy enemy[49];
     Matrix* enemiesModels[49];
+    bool* enemyShouldRender[49];
 
     Mesh pistol;
     Mesh ball;
 
+    bool* buildingsShouldRender[4];
     Matrix* buildingsModels[4];
     Building buildings[4];
     

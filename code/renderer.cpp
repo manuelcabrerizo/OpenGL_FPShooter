@@ -11,7 +11,8 @@ void PushToRender(unsigned int vao,
                   int numberOfVerteces,
                   bool haveIndices,
                   Shader shader,
-                  Matrix* model[])
+                  Matrix* model[],
+                  bool* shouldRender[])
 {
     RenderUnit renderUnit;
     renderUnit.vao = vao;
@@ -21,6 +22,7 @@ void PushToRender(unsigned int vao,
     renderUnit.haveIndices = haveIndices;
     renderUnit.shader = shader;
     renderUnit.model = model;
+    renderUnit.shouldRender = shouldRender;
     renderBuffer.push_back(renderUnit);
 }
 
@@ -34,14 +36,17 @@ void RenderRendererBuffer()
         glBindTexture(GL_TEXTURE_2D, renderUnit->texId);
         for(int j = 0; j < renderUnit->numberMeshes; j++)
         {
-            SetShaderMatrix(*renderUnit->model[j], renderUnit->shader.worldMatLoc);
-            if(renderUnit->haveIndices)
-            { 
-                glDrawElements(GL_TRIANGLES, renderUnit->numberOfVerteces, GL_UNSIGNED_INT, 0);
-            }
-            else
+            if(*renderUnit->shouldRender[j])
             {
-                glDrawArrays(GL_TRIANGLES, 0, renderUnit->numberOfVerteces); 
+                SetShaderMatrix(*renderUnit->model[j], renderUnit->shader.worldMatLoc);
+                if(renderUnit->haveIndices)
+                { 
+                    glDrawElements(GL_TRIANGLES, renderUnit->numberOfVerteces, GL_UNSIGNED_INT, 0);
+                }
+                else
+                {
+                    glDrawArrays(GL_TRIANGLES, 0, renderUnit->numberOfVerteces); 
+                }
             }
         }
     }

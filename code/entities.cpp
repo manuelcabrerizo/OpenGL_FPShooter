@@ -93,6 +93,10 @@ void ProcessEnemyMovementAndCollition(Enemy* enemies,
                                  get_rotation_y_matrix(actualEnemy->rotation) *
                                  get_translation_matrix(actualEnemy->position);
         }
+        else
+        {
+            actualEnemy->shouldRender = false;
+        }
      }
 }
 
@@ -102,6 +106,7 @@ void ShootProjectile(Projectile* projectile, Vec3 start, Vec3 end)
     projectile->end   = end;
     projectile->distance = 0.0f;
     projectile->impactSomething = false;
+    projectile->shouldRender = true;
 }
 
 Matrix UpdateProjectile(Projectile* projectile, float deltaTime)
@@ -116,109 +121,3 @@ Matrix UpdateProjectile(Projectile* projectile, float deltaTime)
     return model;
 }
 
-
-void ProcessPlayerJump(float playerHeight,
-                       float scale,
-                       Camera* camera)
-{
-    if(camera->isJumping)
-    {
-        camera->jumpPower -= GRAVITY / scale;
-        camera->position.y += camera->jumpPower / scale;
-        if(camera->position.y < playerHeight)
-        {
-            camera->position.y = playerHeight;
-            camera->isJumping = false;
-        }
-    }
-    else
-    {
-        camera->position.y = playerHeight;
-    }
-}
-
-void ProcessPlayerMovement(Input* input,
-                           Camera* camera,
-                           Building* buildings,
-                           float deltaTime,
-                           float mapHeigt[],
-                           AABB collider)
-{
-    Vec3 playerVelocity = {0.0f, 0.0f, 0.0f};
-    if(GetKeyDown(input, 'W'))
-    {
-        playerVelocity +=  normaliza_vec3(camera->front);
-        camera->isMoving = true;
-    }
-    if(GetKeyDown(input, 'S'))
-    {
-        playerVelocity +=  -normaliza_vec3(camera->front);
-        camera->isMoving = true;
-    }
-    if(GetKeyDown(input, 'A'))
-    {
-        playerVelocity += normaliza_vec3(camera->right);
-        camera->isMoving = true;
-    }
-    if(GetKeyDown(input, 'D'))
-    {
-        playerVelocity += -normaliza_vec3(camera->right);
-        camera->isMoving = true;
-    }
-    if(!GetKeyDown(input, 'W') && !GetKeyDown(input, 'S') && !GetKeyDown(input, 'A') && !GetKeyDown(input, 'D'))
-    {
-        camera->isMoving = false;
-    }
-
-    if(GetKeyDown(input, 0x20) && camera->isJumping == false)
-    {
-        camera->isJumping = true;
-        camera->jumpPower = JUMP_POWER;
-    }
-
-    Vec3 normPlayerVelocity = {0.0f, 0.0f, 0.0f};
-    if(vec3_length(playerVelocity) != 0.0f)
-    { 
-        normPlayerVelocity = normaliza_vec3(playerVelocity);
-    }
-
-    float t = 0;
-    Vec3 hitPoint  = {0.0f, 0.0f, 0.0f};
-    Vec3 hitNormal = {0.0f, 0.0f, 0.0f};
-    bool isGrouded = true;
-    float playerOverBoxHeight = 0.0f;
-    for(int i = 0; i < 4; i++)
-    {
-        if(XZRayIntersectAABBX(camera->position, normPlayerVelocity, buildings[i].collider, hitPoint, hitNormal, t) && t <= 1.0f)
-        {
-            if(TestAABBAABB(collider, buildings[i].collider) == 1)
-            {
-                Vec3 temp = {absf(normPlayerVelocity.x), normPlayerVelocity.y, absf(normPlayerVelocity.z)};
-                if((temp.x == 0 && temp.y == 0 && temp.z == 0) ||
-                    (hitNormal.x == 0 && hitNormal.y == 0 && hitNormal.z == 0))
-                {
-                    normPlayerVelocity = {0.0f, 0.0f, 0.0f};
-                }
-                else
-                {
-                    normPlayerVelocity += hitNormal * temp * (1.0f - t);
-                }
-            }
-        }
-        if(PointOverAABB(collider.c, buildings[i].collider) == 1 &&
-           TestAABBAABB(collider, buildings[i].collider) == 0 &&
-           collider.c.y - buildings[i].collider.c.y > 0.0f)
-        {
-            playerOverBoxHeight = (buildings[i].collider.c.y + buildings[i].collider.r[1]) + 1.1f;
-            isGrouded = false;
-        }
-    }
-    
-    float playerHeight = 0.0f;
-    if(isGrouded) playerHeight = GetEntityHeight(camera->position.x, camera->position.z, mapHeigt, 50, 50) + 1.1f;
-    else playerHeight = playerOverBoxHeight;   
-    if(camera->position.y > playerHeight) camera->isJumping = true;
-    ProcessPlayerJump(playerHeight, 1.0f, camera);
-    camera->position += (normPlayerVelocity * 2.0f) * deltaTime;
-    camera->viewMat = get_view_matrix(camera->position, camera->position + camera->target, camera->up);  
-}

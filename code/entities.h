@@ -23,6 +23,7 @@ struct Projectile
     float distance;
     bool impactSomething;
     Matrix model;
+    bool shouldRender;
 };
 
 struct Enemy
@@ -32,6 +33,7 @@ struct Enemy
     int life;
     float rotation;
     Matrix model;
+    bool shouldRender;
 };
 
 struct Building
@@ -40,6 +42,7 @@ struct Building
     Vec3 position;
     Vec3 scale;
     Matrix model;
+    bool shouldRender;
 };
 
 struct Weapon
@@ -48,6 +51,7 @@ struct Weapon
     Projectile projectile[200];
     AABB     projCollider[200];
     Matrix model;
+    bool shouldRender;
 };
 
 float GetEntityHeight(float xPos,
@@ -63,16 +67,5 @@ void ProcessEnemyMovementAndCollition(Enemy* enemies,
                                       float deltaTime);
 void ShootProjectile(Projectile* projectile, Vec3 start, Vec3 end);
 Matrix UpdateProjectile(Projectile* projectile, float deltaTime);
-
-void ProcessPlayerJump(float playerHeight,
-                       float scale,
-                       Camera* camera);
-
-void ProcessPlayerMovement(Input* input,
-                           Camera* camera,
-                           Building* buildings,
-                           float deltaTime,
-                           float mapHeigt[],
-                           AABB collider);
 
 #endif

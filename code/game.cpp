@@ -66,6 +66,7 @@ void GameInit(MainGame* game)
     game->player.transform.collider.r[0] = 0.3f; 
     game->player.transform.collider.r[1] = 1.0f;
     game->player.transform.collider.r[2] = 0.3f;
+    game->player.weapon.shouldRender = true;
 
     game->buildings[0].position = {10.0f, 1.0f, 10.0f};
     game->buildings[1].position = {-10.0f, 3.0f, -7.0f};
@@ -83,7 +84,9 @@ void GameInit(MainGame* game)
         game->buildings[i].collider.r[1] = game->buildings[i].scale.y;
         game->buildings[i].collider.r[2] = game->buildings[i].scale.z + 0.1f;
         game->buildings[i].model = get_scale_matrix(game->buildings[i].scale) * get_translation_matrix(game->buildings[i].position);
+        game->buildings[i].shouldRender = true;
         game->buildingsModels[i] = &game->buildings[i].model;
+        game->buildingsShouldRender[i] = &game->buildings[i].shouldRender;
     }
     
     for(int i = 0; i < 200; i++)
@@ -99,6 +102,8 @@ void GameInit(MainGame* game)
         game->player.weapon.projectile[i].impactSomething = false;
         game->player.weapon.projectile[i].model = get_translation_matrix(game->player.weapon.projectile[i].position); 
         game->projectileModels[i] = &game->player.weapon.projectile[i].model;
+        game->player.weapon.projectile[i].shouldRender = true;
+        game->projectileShouldRender[i] = &game->player.weapon.projectile[i].shouldRender;
     }
 
     // ENEMY::STAFF...
@@ -109,6 +114,8 @@ void GameInit(MainGame* game)
             game->enemy[(p * 7) + k].position = {(float)p * 1.0f, 0.0f, (float)k * 1.0f};
             game->enemy[(p * 7) + k].model = get_translation_matrix(game->enemy[(p * 7) + k].position);
             game->enemiesModels[(p * 7) + k] = &game->enemy[(p * 7) + k].model;
+            game->enemy[(p * 7) + k].shouldRender = true;
+            game->enemyShouldRender[(p * 7) + k] = &game->enemy[(p * 7) + k].shouldRender;
         }
     }
     for(int i = 0; i < 49; i++)
@@ -122,13 +129,15 @@ void GameInit(MainGame* game)
         game->enemy[i].life = 1;
     }
     
-    game->terrainModels[0] = &game->terrain.model; 
+    game->terrainModels[0] = &game->terrain.model;
+    game->terrainShouldRender[0] = &game->terrain.shouldRender; 
     game->weaponModel[0] =  &game->player.weapon.model;
-    PushToRender(game->terrain.vao, game->terrain.texId, 1, game->terrain.numIndex, true, game->mesh_shader, game->terrainModels);
-    PushToRender(game->colliderCube.vao, game->colliderCube.textureID, 4, 36, false, game->mesh_shader, game->buildingsModels);
-    PushToRender(game->pistol.vao, game->pistol.texId, 1, game->pistol.numIndex * 3, true, game->mesh_shader, game->weaponModel);
-    PushToRender(game->ball.vao, game->ball.texId, 200, game->ball.numIndex * 3, true, game->mesh_shader, game->projectileModels);
-    PushToRender(game->naruto.vao, game->naruto.texId, 49, game->naruto.numIndex * 3, true, game->mesh_shader, game->enemiesModels);     
+    game->weaponShouldRender[0] = &game->player.weapon.shouldRender;
+    PushToRender(game->terrain.vao, game->terrain.texId, 1, game->terrain.numIndex, true, game->mesh_shader, game->terrainModels, game->terrainShouldRender);
+    PushToRender(game->colliderCube.vao, game->colliderCube.textureID, 4, 36, false, game->mesh_shader, game->buildingsModels, game->buildingsShouldRender);
+    PushToRender(game->pistol.vao, game->pistol.texId, 1, game->pistol.numIndex * 3, true, game->mesh_shader, game->weaponModel, game->weaponShouldRender);
+    PushToRender(game->ball.vao, game->ball.texId, 200, game->ball.numIndex * 3, true, game->mesh_shader, game->projectileModels, game->projectileShouldRender);
+    PushToRender(game->naruto.vao, game->naruto.texId, 49, game->naruto.numIndex * 3, true, game->mesh_shader, game->enemiesModels, game->enemyShouldRender);     
 }
 
 void GameUnpdateAndRender(MainGame* game, float deltaTime)
