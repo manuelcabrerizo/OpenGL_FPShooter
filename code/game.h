@@ -29,8 +29,6 @@ struct MainGame
     UI ui; 
     Input input;
     
-    //Camera camera;
-    //AABB playerCollider;
     Terrain terrain;
     Matrix* terrainModels[1];
     bool* terrainShouldRender[1];
@@ -40,10 +38,6 @@ struct MainGame
     
     // new Player test...
     Player player;
-    Matrix* weaponModel[1];
-    bool* weaponShouldRender[1];
-    Matrix* projectileModels[200];
-    bool* projectileShouldRender[200];
    
     Mesh colliderMesh;
     Cube colliderCube;

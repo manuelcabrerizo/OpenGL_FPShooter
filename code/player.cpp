@@ -3,8 +3,33 @@
 
 #include <math.h>
 
+#include "renderer.h"
+
 #define LEFTBUTTON 0
 #define RIGHTBUTTON 1
+
+
+void InitializePlayer(Player* player, Mesh* weapon, Mesh* projectile, Shader* shader)
+{
+    InitializeCamera(&player->camera);
+    player->transform.position = {0.0f, 0.0f, 0.0f};
+    player->transform.collider.c = player->transform.position;
+    player->transform.collider.r[0] = 0.3f; 
+    player->transform.collider.r[1] = 1.0f;
+    player->transform.collider.r[2] = 0.3f;
+    player->weapon.shouldRender = true;
+    player->weaponModel[0] =  &player->weapon.model;
+    player->weaponShouldRender[0] = &player->weapon.shouldRender;
+    InitializeWeapon(&player->weapon, projectile, shader, 200);
+    PushToRender(weapon->vao,
+                 weapon->texId,
+                 1,
+                 weapon->numIndex * 3,
+                 true,
+                 *shader,
+                 player->weaponModel,
+                 player->weaponShouldRender);
+}
 
 void ProcessPlayerJumpTest(Player* player, float playerHeight)
 {

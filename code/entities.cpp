@@ -1,8 +1,8 @@
 #include "entities.h"
 #include <math.h>
 
-#include "utility.h"
 
+#include "renderer.h"
 
 // temp...
 #include <windows.h>
@@ -119,5 +119,111 @@ Matrix UpdateProjectile(Projectile* projectile, float deltaTime)
     model = get_translation_matrix(projectile->position);
     projectile->distance += projectile->speed * deltaTime;
     return model;
+}
+
+void InitializeBuildings(Building* buildings,
+                         Cube* buildingsMesh,
+                         int numberBuildings,
+                         Shader* shader,
+                         Matrix* buildingsModels[],
+                         bool* buildingsShouldRender[])
+{
+    buildings[0].position = {10.0f, 1.0f, 10.0f};
+    buildings[1].position = {-10.0f, 3.0f, -7.0f};
+    buildings[2].position = {2.0f, 2.0f, 15.0f};
+    buildings[3].position = {-16.0f, 4.0f, 9.0f};
+    buildings[0].scale = {4.0f, 1.0f, 2.0f};
+    buildings[1].scale = {6.0f, 3.0f, 4.0f};
+    buildings[2].scale = {6.0f, 1.5f, 6.0f};
+    buildings[3].scale = {5.0f, 4.0f, 2.0f};
+
+    for(int i = 0; i < numberBuildings; i++)
+    {
+        buildings[i].collider.c = buildings[i].position;
+        buildings[i].collider.r[0] = buildings[i].scale.x + 0.1f; 
+        buildings[i].collider.r[1] = buildings[i].scale.y;
+        buildings[i].collider.r[2] = buildings[i].scale.z + 0.1f;
+        buildings[i].model = get_scale_matrix(buildings[i].scale) * get_translation_matrix(buildings[i].position);
+        buildings[i].shouldRender = true;
+        buildingsModels[i] = &buildings[i].model;
+        buildingsShouldRender[i] = &buildings[i].shouldRender;
+    }
+    PushToRender(buildingsMesh->vao,
+                 buildingsMesh->textureID,
+                 4,
+                 36,
+                 false,
+                 *shader,
+                 buildingsModels,
+                 buildingsShouldRender);
+}
+
+void InitializeEnemies(Enemy* enemy,
+                       Mesh* mesh,
+                       int numberEnemies,
+                       Shader* shader,
+                       Matrix* enemiesModels[],
+                       bool* enemyShouldRender[])
+{
+    // ENEMY::STAFF...
+    for(int k = 0; k < 7; k++)
+    {
+        for(int p = 0; p < 7; p++)
+        {
+            enemy[(p * 7) + k].position = {(float)p * 1.0f, 0.0f, (float)k * 1.0f};
+            enemy[(p * 7) + k].model = get_translation_matrix(enemy[(p * 7) + k].position);
+            enemiesModels[(p * 7) + k] = &enemy[(p * 7) + k].model;
+            enemy[(p * 7) + k].shouldRender = true;
+            enemyShouldRender[(p * 7) + k] = &enemy[(p * 7) + k].shouldRender;
+        }
+    }
+    for(int i = 0; i < numberEnemies; i++)
+    {
+        enemy[i].collider.c = {enemy[i].position.x,
+                               enemy[i].position.y + 0.85f,
+                               enemy[i].position.z};
+        enemy[i].collider.r[0] = 0.1f; 
+        enemy[i].collider.r[1] = 0.8f;
+        enemy[i].collider.r[2] = 0.1f;
+        enemy[i].life = 1;
+    } 
+    PushToRender(mesh->vao,
+                 mesh->texId,
+                 49,
+                 mesh->numIndex * 3,
+                 true,
+                 *shader,
+                 enemiesModels,
+                 enemyShouldRender); 
+}
+
+
+
+void InitializeWeapon(Weapon* weapon, Mesh* projectileMesh, Shader* shader, int numberBullets)
+{
+    for(int i = 0; i < numberBullets; i++)
+    {
+        weapon->projectile[i].start    = {0.0f, 0.0f, 0.0f};
+        weapon->projectile[i].position = {0.0f, 0.0f, 0.0f};
+        weapon->projectile[i].end      = {0.0f, 0.0f, 0.0f};
+        weapon->projectile[i].speed    = 1.0f;
+        weapon->projCollider[i].c = weapon->projectile[i].position;
+        weapon->projCollider[i].r[0] = 0.02f;
+        weapon->projCollider[i].r[1] = 0.02f;
+        weapon->projCollider[i].r[2] = 0.02f;
+        weapon->projectile[i].impactSomething = false;
+        weapon->projectile[i].model = get_translation_matrix(weapon->projectile[i].position); 
+        weapon->projectileModels[i] = &weapon->projectile[i].model;
+        weapon->projectile[i].shouldRender = true;
+        weapon->projectileShouldRender[i] = &weapon->projectile[i].shouldRender;
+    }
+    PushToRender(projectileMesh->vao,
+                 projectileMesh->texId,
+                 numberBullets,
+                 projectileMesh->numIndex * 3,
+                 true,
+                 *shader,
+                 weapon->projectileModels,
+                 weapon->projectileShouldRender);
 }
 

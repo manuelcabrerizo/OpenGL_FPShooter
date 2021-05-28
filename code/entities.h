@@ -3,6 +3,7 @@
 
 #include "collition.h"
 #include "camera.h"
+#include "utility.h"
 
 #define GRAVITY 0.001
 #define JUMP_POWER 0.06
@@ -49,7 +50,9 @@ struct Weapon
 {
     Vec3 position;
     Projectile projectile[200];
-    AABB     projCollider[200];
+    AABB projCollider[200];
+    Matrix* projectileModels[200];
+    bool* projectileShouldRender[200];
     Matrix model;
     bool shouldRender;
 };
@@ -67,5 +70,24 @@ void ProcessEnemyMovementAndCollition(Enemy* enemies,
                                       float deltaTime);
 void ShootProjectile(Projectile* projectile, Vec3 start, Vec3 end);
 Matrix UpdateProjectile(Projectile* projectile, float deltaTime);
+
+void InitializeWeapon(Weapon* weapon,
+                      Mesh* projectileMesh,
+                      Shader* shader,
+                      int numberBullets);
+
+void InitializeBuildings(Building* buildings,
+                         Cube* buildingsMesh,
+                         int numberBuildings,
+                         Shader* shader,
+                         Matrix* buildingsModels[],
+                         bool* buildingsShouldRender[]);
+
+void InitializeEnemies(Enemy* enemy,
+                       Mesh* mesh,
+                       int numberEnemies,
+                       Shader* shader,
+                       Matrix* enemiesModels[],
+                       bool* enemyShouldRender[]);
 
 #endif

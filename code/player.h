@@ -14,8 +14,15 @@ struct Player
     bool isJumping;
     float jumpPower;
     bool shouldRender;
+    Matrix* weaponModel[1];
+    bool* weaponShouldRender[1];
 };
 
+
+void InitializePlayer(Player* player,
+                      Mesh* weapon,
+                      Mesh* projectile,
+                      Shader* shader);
 
 void ProcessPlayerJumpTest(Player* player,
                            float playerHeight);
