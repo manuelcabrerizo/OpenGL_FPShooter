@@ -154,7 +154,6 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     SetShaderMatrix(game->player.camera.viewMat, game->mesh_shader.viewMatLoc);
     UseShader(&game->main_shader);
     SetShaderMatrix(game->player.camera.viewMat, game->main_shader.viewMatLoc);
-
     // Render...   
     // UI STAFF...
     float xPos = (float)WNDWIDTH  / 2.0f;
@@ -172,8 +171,8 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     glBindVertexArray(game->skyBox.vao);
     glBindTexture(GL_TEXTURE_CUBE_MAP, game->skyBox.textureID);
     glDrawArrays(GL_TRIANGLES, 0, 36);
-    glDepthMask(GL_TRUE);
-
+    glDepthMask(GL_TRUE);    
+    
     RenderRendererBuffer();
 }
 

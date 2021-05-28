@@ -322,7 +322,9 @@ void GenerateTerrain(Terrain* terrain,
             Vec3 vertexPos = {(float)posX + (float)(x * cellSpacing),
                              height,
                              (float)posZ + (float)(y * cellSpacing)};
-            Vec2 texturePos = {(float)x, (float)y};
+            Vec2 texturePos;
+            texturePos.x = x;// * (1.0f / numCellCols);
+            texturePos.y = y;// * (1.0f / numCellRows);
             int index = (y * numCols) + x;
             terrain->vertexBuffer[index].vertice      = vertexPos;
             terrain->vertexBuffer[index].textureCoord = texturePos;
@@ -334,8 +336,7 @@ void GenerateTerrain(Terrain* terrain,
     {
         for(int x = 0; x < numCols; x++)
         {
-            // first we need to get the height for tree vertices of our cuad...
-            if(x < numCols - 1 && y < numRows - 1)
+            if(x < numCols && y < numRows)
             {
                 float a = GetHeightFromHeightMap(mapHeigt, numCols, numRows, x, y);
                 float b = GetHeightFromHeightMap(mapHeigt, numCols, numRows, x + 1, y);
@@ -396,7 +397,6 @@ void GenerateTerrain(Terrain* terrain,
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
     terrain->tex = LoadBMP(texFilename);
     if(terrain->tex.pixels != NULL)
     {
