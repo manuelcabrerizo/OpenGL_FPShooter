@@ -7,7 +7,7 @@ IF NOT EXIST build mkdir build
 
 pushd build
 cl /EHsc /Zi ..\code\*.cpp ..\code\glad.c /Fe:game %LIBS% ^
-/I"D:\Dev\FPShooter\include" 
+/I"..\include" 
 popd
 
 

@@ -4,6 +4,7 @@
 #include "game.h"
 #include "math.h"
 #include <math.h>
+#include "colladaParser.h"
 
 #include "renderer.h"
 
@@ -21,6 +22,15 @@ void GameInit(MainGame* game)
     LoadShader(&game->skybox_shader,
             "./code/SkyBoxVertexShader.vert",
             "./code/SkyBoxFragmentShader.frag");
+
+    if(LoadColladaFile("./data/model.dae"))
+    {
+        OutputDebugString("COLLADA FILE LOAD SUCCESS\n");
+    }
+    else
+    {
+        OutputDebugString("COLLADA FILE LOAD FAILED\n");
+    }
 
     #include "constants.h"
     for(int i = 0; i < 50*50; i++)
