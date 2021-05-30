@@ -1,0 +1,235 @@
+#include "colladaParser.h"
+#include "utility.h"
+
+#include <windows.h>
+#include <glad/glad.h>
+#include <string.h>
+#include <stdlib.h>
+
+std::vector<int> ParseStringIntVector(char* string)
+{
+    char* pNext;
+    std::vector<int> vectorFloats;
+    int firstInt = strtol(string, &pNext, 10);
+    vectorFloats.push_back(firstInt);
+    while(true)
+    {
+        char* pActual = pNext;
+        int nextInt = strtol(pActual, &pNext, 10);
+        if(pActual == pNext)
+        {
+            break;
+        }
+        vectorFloats.push_back(nextInt);
+    }
+    return vectorFloats;
+}
+
+std::vector<float> ParseStringFloatVector(char* string)
+{
+    char* pNext;
+    std::vector<float> vectorFloats;
+    float firstFloat = strtof(string, &pNext);
+    vectorFloats.push_back(firstFloat);
+    while(true)
+    {
+        char* pActual = pNext;
+        float nextFloat = strtof(pActual, &pNext);
+        if(pActual == pNext)
+        {
+            break;
+        }
+        vectorFloats.push_back(nextFloat);
+    }
+    return vectorFloats;
+}
+
+bool LoadColladaFile(unsigned int* vao,
+                     unsigned int* textId,
+                     int* numberVertices,
+                     const char* xmlFilePath,
+                     const char* textureFilePath)
+{
+    // open the xml file
+    TiXmlDocument xmlDoc;
+    if(!xmlDoc.LoadFile(xmlFilePath))
+    {
+        return false;
+    }
+
+    // then we have to get a pointer to the 
+    // root element of the xml file
+    TiXmlElement* pRoot = xmlDoc.RootElement();
+
+    // first we are going to try loading the data 
+    // of the collada file
+    TiXmlElement* geometries  = 0;
+    TiXmlElement* animations  = 0;
+    TiXmlElement* controllers = 0;
+    TiXmlElement* visualScene = 0;
+
+    for(TiXmlElement* e = pRoot->FirstChildElement();
+        e != NULL;
+        e = e->NextSiblingElement())
+    {
+        if(strcmp(e->Value(), "library_geometries") == 0)
+        {
+            geometries = e;
+        }
+        if(strcmp(e->Value(), "library_animations") == 0)
+        {
+            animations = e;
+        }
+        if(strcmp(e->Value(), "library_controllers") == 0)
+        {
+            controllers = e;
+        }
+        if(strcmp(e->Value(), "library_visual_scenes") == 0)
+        {
+            visualScene = e;
+        }
+    }
+    
+    if(geometries == NULL  ||
+       animations == NULL  ||
+       controllers == NULL ||
+       visualScene == NULL)
+    {
+        return false;
+    }
+    
+
+    // procces the geometry data
+    // LOADING::VERTICES::NORMALS::TEXTURECOODS
+    char* verticesString; 
+    char* normalsString;
+    char* textureString;
+    char* indicesString; 
+    std::vector<float> vertices;
+    std::vector<float> normals;
+    std::vector<float> textures;
+    std::vector<int>   indices;
+
+    for(TiXmlElement* e = geometries->FirstChildElement()->FirstChildElement()->FirstChildElement();
+        e != NULL;
+        e = e->NextSiblingElement())
+    {
+        if(e->Attribute("id") != NULL)
+        {
+            if(strcmp(e->Attribute("id"), "Cube-mesh-positions") == 0)
+            {
+                verticesString = (char*)e->FirstChildElement()->GetText(); 
+            }
+            if(strcmp(e->Attribute("id"), "Cube-mesh-normals") == 0)
+            {
+                normalsString = (char*)e->FirstChildElement()->GetText();
+            }
+            if(strcmp(e->Attribute("id"), "Cube-mesh-map-0") == 0)
+            {
+                textureString = (char*)e->FirstChildElement()->GetText();
+            }
+        }
+        if(strcmp(e->Value(), "polylist") == 0)
+        {
+            for(TiXmlElement* polylist = e->FirstChildElement();
+                polylist != NULL;
+                polylist = polylist->NextSiblingElement())
+            {
+                if(strcmp(polylist->Value(), "p") == 0)
+                {
+                    indicesString = (char*)polylist->GetText();
+                }
+            }
+        }
+    }
+    vertices = ParseStringFloatVector(verticesString);
+    normals  = ParseStringFloatVector(normalsString);
+    textures = ParseStringFloatVector(textureString);
+    indices  = ParseStringIntVector(indicesString);
+
+    std::vector<float> vertexBufferTemp;
+    for(int i = 0; i < indices.size(); i += 4)
+    {
+        for(int j = 0; j < 3; j++)
+        {
+            vertexBufferTemp.push_back(vertices[(indices[0 + i] * 3) + j]);
+        } 
+        for(int j = 0; j < 3; j++)
+        {
+            vertexBufferTemp.push_back(normals[(indices[1 + i] * 3) + j]);
+        }
+        for(int j = 0; j < 2; j++)
+        {
+            vertexBufferTemp.push_back(textures[(indices[2 + i] * 2) + j]);
+        }
+    }
+   
+     
+    std::vector<int> indexBuffer;
+    for(int i = 0; i < indices.size(); i += 4)
+    {
+        indexBuffer.push_back((indices[i]));
+    }
+ 
+    float* vertexBuffer = (float*)malloc((indexBuffer.size() * 3) * sizeof(float)); 
+    int vertexIndex = 0;
+    for(int i = 0; i < indexBuffer.size(); i++)
+    {
+        for(int j = 0; j < 8; j++)
+        {
+            int index = (indexBuffer[i] * 8) + j;
+            vertexBuffer[index] = vertexBufferTemp[vertexIndex + j];
+        }
+        vertexIndex += 8;        
+    }
+
+    glGenVertexArrays(1, vao);
+    glBindVertexArray(*vao);
+
+    unsigned int vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, (indexBuffer.size() * 3) * sizeof(float), vertexBuffer, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+    
+    unsigned int ebo;
+    glGenBuffers(1, &ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.size() * sizeof(int), indexBuffer.data(), GL_STATIC_DRAW);
+    
+    *numberVertices = indexBuffer.size() * 3;
+    free(vertexBuffer);
+ 
+
+    uint32_t texture1;
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1);
+    *textId = texture1;
+    // test loadd bmp file:
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    Texture texture = LoadBMP(textureFilePath);
+
+    if(texture.pixels != NULL)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.width, texture.height,
+                                    0, GL_BGRA, GL_UNSIGNED_BYTE, texture.pixels);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        OutputDebugString("ERROR::LOADING::BMP::FILE\n");
+    }
+    free(texture.pixels);
+
+
+    return true;
+}

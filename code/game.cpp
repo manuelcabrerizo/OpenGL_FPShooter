@@ -23,7 +23,12 @@ void GameInit(MainGame* game)
             "./code/SkyBoxVertexShader.vert",
             "./code/SkyBoxFragmentShader.frag");
 
-    if(LoadColladaFile("./data/model.dae"))
+
+    if(LoadColladaFile(&game->colladaVao,
+                       &game->colladaTexId,
+                       &game->colladaMeshNumVertex,
+                       "./data/model.dae",
+                       "./data/cowboy.bmp"))
     {
         OutputDebugString("COLLADA FILE LOAD SUCCESS\n");
     }
@@ -31,6 +36,7 @@ void GameInit(MainGame* game)
     {
         OutputDebugString("COLLADA FILE LOAD FAILED\n");
     }
+    LoadOBJFileIndex(&game->cowboy, "./data/cowboy.obj", "./data/cowboy.bmp");
 
     #include "constants.h"
     for(int i = 0; i < 50*50; i++)
@@ -110,8 +116,32 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     glBindVertexArray(game->skyBox.vao);
     glBindTexture(GL_TEXTURE_CUBE_MAP, game->skyBox.textureID);
     glDrawArrays(GL_TRIANGLES, 0, 36);
-    glDepthMask(GL_TRUE);    
+    glDepthMask(GL_TRUE);  
+
+
+    // PRIMER::PRUEVA::DE::MODELO::CARGADO::CON::COLLADA::FILE::TYPE... 
+    UseShader(&game->mesh_shader);
+    SetShaderMatrix(get_rotation_x_matrix(to_radiant(-90.0f)) *
+                    get_rotation_y_matrix(to_radiant(180.0f)) *
+                    get_translation_matrix({0.0f, 0.0f, 0.0f}),
+                    game->mesh_shader.worldMatLoc);
+    glBindVertexArray(game->colladaVao);
+    glBindTexture(GL_TEXTURE_2D, game->colladaTexId);
+    glDrawElements(GL_TRIANGLES, game->colladaMeshNumVertex, GL_UNSIGNED_INT, 0);
+    //glDrawArrays(GL_TRIANGLES, 0, game->colladaMeshNumVertex);
     
+    SetShaderMatrix(get_rotation_x_matrix(to_radiant(0.0f)) *
+                    get_rotation_y_matrix(to_radiant(180.0f)) *
+                    get_translation_matrix({5.0f, 0.0f, 0.0f}),
+                    game->mesh_shader.worldMatLoc);
+    glBindVertexArray(game->cowboy.vao);
+    glBindTexture(GL_TEXTURE_2D, game->cowboy.texId);
+    glDrawElements(GL_TRIANGLES, game->cowboy.numIndex * 3, GL_UNSIGNED_INT, 0);
+
+
+    
+
+    /////////////////////////////////////////////////////////////////// 
     RenderRendererBuffer();
 }
 

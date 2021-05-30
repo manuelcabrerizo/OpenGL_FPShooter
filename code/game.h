@@ -53,6 +53,13 @@ struct MainGame
     bool* buildingsShouldRender[4];
     Matrix* buildingsModels[4];
     Building buildings[4];
+
+
+    unsigned int colladaVao;
+    unsigned int colladaTexId;
+    int colladaMeshNumVertex;
+
+    Mesh cowboy;
     
 
 };
