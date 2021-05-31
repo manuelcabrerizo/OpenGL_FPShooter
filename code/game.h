@@ -58,10 +58,6 @@ struct MainGame
     unsigned int colladaVao;
     unsigned int colladaTexId;
     int colladaMeshNumVertex;
-
-    Mesh cowboy;
-    
-
 };
 
 void GameInit(MainGame* game);

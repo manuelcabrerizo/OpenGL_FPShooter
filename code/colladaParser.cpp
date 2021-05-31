@@ -5,13 +5,15 @@
 #include <glad/glad.h>
 #include <string.h>
 #include <stdlib.h>
+#include <string>
+#include <iostream>
 
 std::vector<int> ParseStringIntVector(char* string)
 {
     char* pNext;
-    std::vector<int> vectorFloats;
+    std::vector<int> vectorInt;
     int firstInt = strtol(string, &pNext, 10);
-    vectorFloats.push_back(firstInt);
+    vectorInt.push_back(firstInt);
     while(true)
     {
         char* pActual = pNext;
@@ -20,9 +22,9 @@ std::vector<int> ParseStringIntVector(char* string)
         {
             break;
         }
-        vectorFloats.push_back(nextInt);
+        vectorInt.push_back(nextInt);
     }
-    return vectorFloats;
+    return vectorInt;
 }
 
 std::vector<float> ParseStringFloatVector(char* string)
@@ -76,6 +78,7 @@ bool LoadColladaFile(unsigned int* vao,
         {
             geometries = e;
         }
+        
         if(strcmp(e->Value(), "library_animations") == 0)
         {
             animations = e;
@@ -90,10 +93,7 @@ bool LoadColladaFile(unsigned int* vao,
         }
     }
     
-    if(geometries == NULL  ||
-       animations == NULL  ||
-       controllers == NULL ||
-       visualScene == NULL)
+    if(geometries == NULL)
     {
         return false;
     }
@@ -108,7 +108,8 @@ bool LoadColladaFile(unsigned int* vao,
     std::vector<float> vertices;
     std::vector<float> normals;
     std::vector<float> textures;
-    std::vector<int>   indices;
+    std::vector<int>   indices; 
+    int offset = 0;
 
     for(TiXmlElement* e = geometries->FirstChildElement()->FirstChildElement()->FirstChildElement();
         e != NULL;
@@ -129,26 +130,37 @@ bool LoadColladaFile(unsigned int* vao,
                 textureString = (char*)e->FirstChildElement()->GetText();
             }
         }
-        if(strcmp(e->Value(), "polylist") == 0)
+        if(strcmp(e->Value(), "triangles") == 0)
         {
             for(TiXmlElement* polylist = e->FirstChildElement();
                 polylist != NULL;
                 polylist = polylist->NextSiblingElement())
             {
+
+                if(strcmp(polylist->Value(), "input") == 0)
+                {
+                    offset++; 
+                }
+
                 if(strcmp(polylist->Value(), "p") == 0)
                 {
                     indicesString = (char*)polylist->GetText();
+                    std::vector<int> actualIndex = ParseStringIntVector(indicesString);
+                    for(int i = 0; i < actualIndex.size(); i++)
+                    {
+                        indices.push_back(actualIndex[i]);
+                    }
                 }
             }
         }
     }
     vertices = ParseStringFloatVector(verticesString);
     normals  = ParseStringFloatVector(normalsString);
-    textures = ParseStringFloatVector(textureString);
-    indices  = ParseStringIntVector(indicesString);
+    textures = ParseStringFloatVector(textureString);    
 
+    
     std::vector<float> vertexBufferTemp;
-    for(int i = 0; i < indices.size(); i += 4)
+    for(int i = 0; i < indices.size(); i += offset)
     {
         for(int j = 0; j < 3; j++)
         {
@@ -165,6 +177,51 @@ bool LoadColladaFile(unsigned int* vao,
     }
    
      
+    glGenVertexArrays(1, vao);
+    glBindVertexArray(*vao);
+
+    unsigned int vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, vertexBufferTemp.size() * sizeof(float), vertexBufferTemp.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+    
+    *numberVertices = vertexBufferTemp.size() / 8;
+   
+    uint32_t texture1;
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1);
+    *textId = texture1;
+    // test loadd bmp file:
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    Texture texture = LoadBMP(textureFilePath);
+    if(texture.pixels != NULL)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.width, texture.height,
+                                    0, GL_BGRA, GL_UNSIGNED_BYTE, texture.pixels);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        OutputDebugString("ERROR::LOADING::BMP::FILE\n");
+    }
+    free(texture.pixels);
+    
+
+    return true;
+}
+
+
+// PA::CUANDO::TENGA::GANAS::DE::HACERLO::ASI
+/*
     std::vector<int> indexBuffer;
     for(int i = 0; i < indices.size(); i += 4)
     {
@@ -182,54 +239,11 @@ bool LoadColladaFile(unsigned int* vao,
         }
         vertexIndex += 8;        
     }
-
-    glGenVertexArrays(1, vao);
-    glBindVertexArray(*vao);
-
-    unsigned int vbo;
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, (indexBuffer.size() * 3) * sizeof(float), vertexBuffer, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
     
+    free(vertexBuffer);
+
     unsigned int ebo;
     glGenBuffers(1, &ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.size() * sizeof(int), indexBuffer.data(), GL_STATIC_DRAW);
-    
-    *numberVertices = indexBuffer.size() * 3;
-    free(vertexBuffer);
- 
-
-    uint32_t texture1;
-    glGenTextures(1, &texture1);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-    *textId = texture1;
-    // test loadd bmp file:
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    Texture texture = LoadBMP(textureFilePath);
-
-    if(texture.pixels != NULL)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.width, texture.height,
-                                    0, GL_BGRA, GL_UNSIGNED_BYTE, texture.pixels);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-    {
-        OutputDebugString("ERROR::LOADING::BMP::FILE\n");
-    }
-    free(texture.pixels);
-
-
-    return true;
-}
+*/
