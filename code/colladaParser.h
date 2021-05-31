@@ -11,6 +11,7 @@ bool LoadColladaFile(unsigned int* vao,
                      unsigned int* textId,
                      int* numberVertices,
                      const char* xmlFilePath,
-                     const char* textureFilePath);
+                     const char* textureFilePath,
+                     bool haveEBO);
 
 #endif

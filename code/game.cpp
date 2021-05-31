@@ -23,14 +23,12 @@ void GameInit(MainGame* game)
             "./code/SkyBoxVertexShader.vert",
             "./code/SkyBoxFragmentShader.frag");
  
-    if(LoadColladaFile(&game->colladaVao,
+    LoadColladaFile(&game->colladaVao,
                     &game->colladaTexId,
                     &game->colladaMeshNumVertex,
-                    "./data/naruto.dae",
-                    "./data/naruto.bmp") == true)
-    {
-        OutputDebugString("collada_file_loaded\n");
-    }
+                    "./data/model.dae",
+                    "./data/cowboy.bmp",
+                    false);
 
     #include "constants.h"
     for(int i = 0; i < 50*50; i++)
@@ -115,10 +113,10 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
 
     // PRIMER::PRUEVA::DE::MODELO::CARGADO::CON::COLLADA::FILE::TYPE... 
     UseShader(&game->mesh_shader);
-    SetShaderMatrix(get_scale_matrix({0.01f, 0.01f, 0.01f})   *
+    SetShaderMatrix(get_scale_matrix({1.0f, 1.0f, 1.0f})   *
                     get_rotation_x_matrix(to_radiant(-90.0f)) *
                     get_rotation_y_matrix(to_radiant(180.0f)) *
-                    get_translation_matrix({0.0f, 0.0f, 0.0f}),
+                    get_translation_matrix({0.0f, 1.0f, 0.0f}),
                     game->mesh_shader.worldMatLoc);
     glBindVertexArray(game->colladaVao);
     glBindTexture(GL_TEXTURE_2D, game->colladaTexId);

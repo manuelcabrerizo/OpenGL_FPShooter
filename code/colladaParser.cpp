@@ -50,21 +50,15 @@ bool LoadColladaFile(unsigned int* vao,
                      unsigned int* textId,
                      int* numberVertices,
                      const char* xmlFilePath,
-                     const char* textureFilePath)
+                     const char* textureFilePath,
+                     bool haveEBO)
 {
-    // open the xml file
     TiXmlDocument xmlDoc;
     if(!xmlDoc.LoadFile(xmlFilePath))
     {
         return false;
     }
-
-    // then we have to get a pointer to the 
-    // root element of the xml file
     TiXmlElement* pRoot = xmlDoc.RootElement();
-
-    // first we are going to try loading the data 
-    // of the collada file
     TiXmlElement* geometries  = 0;
     TiXmlElement* animations  = 0;
     TiXmlElement* controllers = 0;
@@ -97,10 +91,7 @@ bool LoadColladaFile(unsigned int* vao,
     {
         return false;
     }
-    
-
-    // procces the geometry data
-    // LOADING::VERTICES::NORMALS::TEXTURECOODS
+ 
     char* verticesString; 
     char* normalsString;
     char* textureString;
@@ -178,23 +169,68 @@ bool LoadColladaFile(unsigned int* vao,
             vertexBufferTemp.push_back(textures[(indices[2 + i] * 2) + j]);
         }
     }
-   
-     
-    glGenVertexArrays(1, vao);
-    glBindVertexArray(*vao);
-
-    unsigned int vbo;
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, vertexBufferTemp.size() * sizeof(float), vertexBufferTemp.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
     
-    *numberVertices = vertexBufferTemp.size() / 8;
+
+    if(haveEBO)
+    {
+        std::vector<int> indexBuffer;
+        for(int i = 0; i < indices.size(); i += offset)
+        {
+            indexBuffer.push_back((indices[i]));
+        }
+        int memoryToAllocate = (vertices.size() / 3) * 8;
+        float* vertexBuffer = (float*)malloc(memoryToAllocate * sizeof(float)); 
+        int vertexIndex = 0;
+        for(int i = 0; i < indexBuffer.size(); i++)
+        {
+            for(int j = 0; j < 8; j++)
+            {
+                int index = (indexBuffer[i] * 8) + j;
+                vertexBuffer[index] = vertexBufferTemp[vertexIndex + j];
+            }
+            vertexIndex += 8;        
+        }
+   
+        glGenVertexArrays(1, vao);
+        glBindVertexArray(*vao);
+
+        unsigned int vbo;
+        glGenBuffers(1, &vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, memoryToAllocate * sizeof(float), vertexBuffer, GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
+
+        unsigned int ebo;
+        glGenBuffers(1, &ebo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.size() * sizeof(int), indexBuffer.data(), GL_STATIC_DRAW);
+    
+        *numberVertices = indexBuffer.size();
+        free(vertexBuffer);
+    }
+    else
+    {
+        glGenVertexArrays(1, vao);
+        glBindVertexArray(*vao);
+
+        unsigned int vbo;
+        glGenBuffers(1, &vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, vertexBufferTemp.size() * sizeof(float), vertexBufferTemp.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
+
+        *numberVertices = vertexBufferTemp.size();
+    }
    
     uint32_t texture1;
     glGenTextures(1, &texture1);
@@ -223,30 +259,4 @@ bool LoadColladaFile(unsigned int* vao,
 }
 
 
-// PA::CUANDO::TENGA::GANAS::DE::HACERLO::ASI
-/*
-    std::vector<int> indexBuffer;
-    for(int i = 0; i < indices.size(); i += 4)
-    {
-        indexBuffer.push_back((indices[i]));
-    }
- 
-    float* vertexBuffer = (float*)malloc((indexBuffer.size() * 3) * sizeof(float)); 
-    int vertexIndex = 0;
-    for(int i = 0; i < indexBuffer.size(); i++)
-    {
-        for(int j = 0; j < 8; j++)
-        {
-            int index = (indexBuffer[i] * 8) + j;
-            vertexBuffer[index] = vertexBufferTemp[vertexIndex + j];
-        }
-        vertexIndex += 8;        
-    }
-    
-    free(vertexBuffer);
 
-    unsigned int ebo;
-    glGenBuffers(1, &ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.size() * sizeof(int), indexBuffer.data(), GL_STATIC_DRAW);
-*/
