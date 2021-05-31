@@ -110,6 +110,7 @@ bool LoadColladaFile(unsigned int* vao,
     std::vector<float> textures;
     std::vector<int>   indices; 
     int offset = 0;
+    bool stopOffset = false;
 
     for(TiXmlElement* e = geometries->FirstChildElement()->FirstChildElement()->FirstChildElement();
         e != NULL;
@@ -139,11 +140,13 @@ bool LoadColladaFile(unsigned int* vao,
 
                 if(strcmp(polylist->Value(), "input") == 0)
                 {
-                    offset++; 
+                    if(!stopOffset)
+                        offset++; 
                 }
 
                 if(strcmp(polylist->Value(), "p") == 0)
                 {
+                    stopOffset = true;
                     indicesString = (char*)polylist->GetText();
                     std::vector<int> actualIndex = ParseStringIntVector(indicesString);
                     for(int i = 0; i < actualIndex.size(); i++)
@@ -154,10 +157,10 @@ bool LoadColladaFile(unsigned int* vao,
             }
         }
     }
+
     vertices = ParseStringFloatVector(verticesString);
     normals  = ParseStringFloatVector(normalsString);
     textures = ParseStringFloatVector(textureString);    
-
     
     std::vector<float> vertexBufferTemp;
     for(int i = 0; i < indices.size(); i += offset)
