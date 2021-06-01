@@ -31,12 +31,12 @@ void InitializePlayer(Player* player, Mesh* weapon, Mesh* projectile, Shader* sh
                  player->weaponShouldRender);
 }
 
-void ProcessPlayerJumpTest(Player* player, float playerHeight)
+void ProcessPlayerJumpTest(Player* player, float playerHeight, float deltaTime)
 {
     if(player->isJumping)
     {
-        player->jumpPower -= GRAVITY;
-        player->transform.position.y += player->jumpPower;
+        player->jumpPower -= GRAVITY * deltaTime;
+        player->transform.position.y += player->jumpPower * deltaTime;
         if(player->transform.position.y < playerHeight)
         {
             player->transform.position.y = playerHeight;
@@ -130,7 +130,7 @@ void ProcessPlayerCollitions(Player* player,
     if(isGrouded) playerHeight = GetEntityHeight(player->transform.position.x, player->transform.position.z, mapHeigt, 50, 50) + 1.1f;
     else playerHeight = playerOverBoxHeight;   
     if(player->transform.position.y > playerHeight) player->isJumping = true; 
-    ProcessPlayerJumpTest(player, playerHeight);
+    ProcessPlayerJumpTest(player, playerHeight, deltaTime);
 
     player->transform.position += (player->velocity * 2.0f) * deltaTime;
     player->transform.collider.c = player->transform.position;

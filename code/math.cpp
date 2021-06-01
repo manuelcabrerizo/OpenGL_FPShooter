@@ -1,6 +1,38 @@
 #include "math.h"
 #include <math.h>
 
+Quaternion QuaternionRotationAxis(Vec3 axis, float angle)
+{
+    axis = normaliza_vec3(axis);
+    float w = cosf(angle / 2.0f);
+    float s = sinf(angle / 2.0f);
+    Vec3 qv = {axis.x * s, axis.y * s, axis.z * s};
+    Quaternion q = {qv.x, qv.y, qv.z, w};
+    return q;
+}
+
+Matrix GetQuaternionRotationMatrix(Quaternion q)
+{
+    Matrix result = {{
+        {1.0f-(2.0f*q.y*q.y)-(2.0f*q.z*q.z), (2.0f*q.x*q.y)-(2.0f*q.w*q.z), (2.0f*q.x*q.z)+(2.0f*q.w*q.y), 0.0f},
+        {(2.0f*q.x*q.y)+(2.0f*q.w*q.z), 1.0f-(2.0f*q.x*q.x)-(2.0f*q.z*q.z), (2.0f*q.y*q.z)-(2.0f*q.w*q.x), 0.0f},
+        {(2.0f*q.x*q.z)-(2.0f*q.w*q.y), (2.0f*q.y*q.z)+(2.0f*q.w*q.x), 1.0f-(2.0f*q.x*q.x)-(2.0f*q.y*q.y), 0.0f},
+        {0.0f, 0.0f, 0.0f, 1.0f}
+    }};
+    return result;
+}
+
+Quaternion GetQuaternionFromMatrix(Matrix m)
+{
+    float angle = acosf(0.5f*(m.m[0][0]+m.m[1][1]+m.m[2][2]+m.m[3][3]-2.0f));
+    float axisX = (m.m[2][1]-m.m[1][2])/(2.0f*sinf(angle));
+    float axisY = (m.m[0][2]-m.m[2][0])/(2.0f*sinf(angle));
+    float axisZ = (m.m[1][0]-m.m[0][1])/(2.0f*sinf(angle));
+    Vec3 axis = {axisX, axisY, axisZ};
+    Quaternion result = QuaternionRotationAxis(axis, angle);
+    return result;
+}
+
 float to_radiant(float v)
 {
     return v * PI / 180.0f;
@@ -208,6 +240,20 @@ Matrix operator*(const Matrix& a, const Matrix& b)
     return result;
 }
 
+
+Matrix operator*(const Matrix& m, const float& s)
+{
+    Matrix result;
+    for(int y = 0; y < 4; y++)
+    {
+        for(int x = 0; x < 4; x++)
+        {
+            result.m[y][x] = m.m[y][x] * s; 
+        }
+    }
+    return result;
+}
+
 Matrix get_view_matrix(Vec3 eye, Vec3 target, Vec3 up)
 {
     Vec3 z = normaliza_vec3(target - eye);
@@ -368,6 +414,88 @@ Matrix get_rotation_arbitrary_matrix(Vec3 n, float a)
         {n.x*n.z*(1.0f-cosf(a))+n.y*sinf(a),   n.y*n.z*(1.0f-cosf(a))-n.x*sinf(a),   powf(n.z, 2)*(1.0f-cosf(a))+cosf(a),    0.0f},
         {0.0f,                                 0.0f,                                 0.0f,                                   1.0f}
     }};
+    return result;
+}
+
+float det_3x3(Matrix3 m)
+{
+    float det = (m.m[0][0]*m.m[1][1]*m.m[2][2]) +
+                (m.m[0][1]*m.m[1][2]*m.m[2][0]) +
+                (m.m[0][2]*m.m[1][0]*m.m[2][1]) -
+                (m.m[0][2]*m.m[1][1]*m.m[2][0]) -
+                (m.m[0][1]*m.m[1][0]*m.m[2][2]) -
+                (m.m[0][0]*m.m[1][2]*m.m[2][1]);
+    return det;
+}
+
+float det_4x4(Matrix m)
+{
+    float cof0 =  det_3x3(get_cof_matrix(m, 0, 0));
+    float cof1 = -det_3x3(get_cof_matrix(m, 1, 0));
+    float cof2 =  det_3x3(get_cof_matrix(m, 2, 0));
+    float cof3 = -det_3x3(get_cof_matrix(m, 3, 0));
+    float det4x4 = (m.m[0][0] * cof0) +
+                   (m.m[0][1] * cof1) +
+                   (m.m[0][2] * cof2) +
+                   (m.m[0][3] * cof3);
+    return det4x4;
+}
+
+Matrix3 get_cof_matrix(Matrix m, int x, int y)
+{
+    Matrix3 result;
+    int yIndex = 0; 
+    for(int i = 0; i < 4; i++)
+    {
+        if(i != y)
+        {
+            int xIndex = 0; 
+            for(int j = 0; j < 4; j++)
+            {
+                if(j != x)
+                {
+                    result.m[yIndex][xIndex] = m.m[i][j];
+                    xIndex++;
+                }
+                
+            }
+            yIndex++;
+        }
+    }    
+    return result;
+}
+
+Matrix get_matrix_adjunta(Matrix m)
+{
+    Matrix result;
+    for(int i = 0; i < 4; i++)
+    {
+        for(int j = 0; j < 4; j++)
+        {
+            if(i % 2 == 0)
+            {
+                if(j % 2 == 0)
+                    result.m[i][j] =  det_3x3(get_cof_matrix(m, j, i));
+                else
+                    result.m[i][j] = -det_3x3(get_cof_matrix(m, j, i));
+            }
+            else
+            {
+                if(j % 2 == 0)
+                    result.m[i][j] = -det_3x3(get_cof_matrix(m, j, i));
+                else
+                    result.m[i][j] =  det_3x3(get_cof_matrix(m, j, i));
+            }
+            
+          }
+    }
+    result = matrix_transpose(result);
+    return result;
+}
+
+Matrix get_inverse_matrix(Matrix m)
+{
+    Matrix result = get_matrix_adjunta(m) * (1.0f / det_4x4(m));
     return result;
 }
 

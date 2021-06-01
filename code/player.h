@@ -25,7 +25,8 @@ void InitializePlayer(Player* player,
                       Shader* shader);
 
 void ProcessPlayerJumpTest(Player* player,
-                           float playerHeight);
+                           float playerHeight,
+                           float deltaTime);
 
 void ProcessPlayerMovementTest(Player* player,
                                Input* input,

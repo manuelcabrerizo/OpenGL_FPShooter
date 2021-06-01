@@ -23,6 +23,17 @@ struct Matrix3
     float m[3][3];
 };
 
+
+struct Quaternion
+{
+    float x, y, z, w;
+};
+
+
+Quaternion QuaternionRotationAxis(Vec3 axis, float angle);
+Matrix GetQuaternionRotationMatrix(Quaternion q);
+Quaternion GetQuaternionFromMatrix(Matrix m);
+
 float to_radiant(float v);
 float absf(float f);
 int Abs(int number);
@@ -48,6 +59,7 @@ Vec3 operator*(const Vec3& v0, const Vec3& v1);
 Matrix operator+(const Matrix& a, const Matrix& b);
 Matrix operator-(const Matrix& a, const Matrix& b);
 Matrix operator*(const Matrix& a, const Matrix& b);
+Matrix operator*(const Matrix& m, const float& s);
 Matrix get_view_matrix(Vec3 eye, Vec3 target, Vec3 up);
 Matrix get_projection_perspective_matrix(float fov, float aspect, float znear, float zfar);
 Matrix get_projection_orthogonal_matrix(int width, int height, float znear, float zfar);
@@ -62,6 +74,11 @@ Matrix get_rotation_arbitrary_matrix(Vec3 n, float angle);
 
 Matrix3 to_3x3_matrix(Matrix m);
 Matrix to_4x4_matrix(Matrix3 m);
+float det_3x3(Matrix3 m);
+float det_4x4(Matrix m);
+Matrix3 get_cof_matrix(Matrix m, int x, int y);
+Matrix get_matrix_adjunta(Matrix m);
+Matrix get_inverse_matrix(Matrix m);
 
 float vec3_dot(Vec3 a, Vec3 b);
 Vec3 vec3_cross(Vec3 a, Vec3 b);

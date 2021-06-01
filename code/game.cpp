@@ -26,16 +26,15 @@ void GameInit(MainGame* game)
     LoadColladaFile(&game->colladaVao,
                     &game->colladaTexId,
                     &game->colladaMeshNumVertex,
-                    "./data/model.dae",
-                    "./data/cowboy.bmp",
-                    false);
+                    "./data/naruto1.dae",
+                    "./data/naruto.bmp",
+                    true);
 
     #include "constants.h"
     for(int i = 0; i < 50*50; i++)
     {
         game->mapHeigt[i] = heights[i];
-    }
-    
+    } 
 
     // Create Boths of our PROJECTION MATRIX...
     Matrix proj = get_projection_perspective_matrix(to_radiant(90), WNDWIDTH/WNDHEIGHT, 0.1f, 100.0f);
@@ -74,7 +73,29 @@ void GameInit(MainGame* game)
 
     game->terrainModels[0] = &game->terrain.model;
     game->terrainShouldRender[0] = &game->terrain.shouldRender; 
-    PushToRender(game->terrain.vao, game->terrain.texId, 1, game->terrain.numIndex, true, game->mesh_shader, game->terrainModels, game->terrainShouldRender);
+    PushToRender(game->terrain.vao, game->terrain.texId, 1, game->terrain.numIndex, true, game->mesh_shader, game->terrainModels, game->terrainShouldRender); 
+    
+
+    Matrix mat = {{
+        { 3.0f,  1.0f,  0.0f, -2.0f},
+        {-2.0f, -4.0f,  3.0f,  5.0f},
+        { 5.0f,  4.0f, -2.0f,  9.0f},
+        { 0.0f,  1.0f,  7.0f, -1.0f}
+    }};
+
+    float det = det_4x4(mat);
+    char buffer[255];
+    sprintf(buffer, "result: %f\n", det);
+    OutputDebugString(buffer);
+
+    Matrix adj = get_inverse_matrix(mat);
+    sprintf(buffer, "%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n",
+            adj.m[0][0], adj.m[0][1], adj.m[0][2], adj.m[0][3],
+            adj.m[1][0], adj.m[1][1], adj.m[1][2], adj.m[1][3],
+            adj.m[2][0], adj.m[2][1], adj.m[2][2], adj.m[2][3],
+            adj.m[3][0], adj.m[3][1], adj.m[3][2], adj.m[3][3]);
+    OutputDebugString(buffer);
+
 }
 
 void GameUnpdateAndRender(MainGame* game, float deltaTime)
@@ -111,17 +132,17 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     glDepthMask(GL_TRUE);  
 
 
-    // PRIMER::PRUEVA::DE::MODELO::CARGADO::CON::COLLADA::FILE::TYPE... 
+    // PRIMER::PRUEVA::DE::MODELO::CARGADO::CON::COLLADA::FILE::TYPE...
     UseShader(&game->mesh_shader);
-    SetShaderMatrix(get_scale_matrix({1.0f, 1.0f, 1.0f})   *
+    SetShaderMatrix(get_scale_matrix({0.02f, 0.02f, 0.02f})   *
                     get_rotation_x_matrix(to_radiant(-90.0f)) *
                     get_rotation_y_matrix(to_radiant(180.0f)) *
-                    get_translation_matrix({0.0f, 1.0f, 0.0f}),
+                    get_translation_matrix({0.0f, 4.0f, 0.0f}),
                     game->mesh_shader.worldMatLoc);
     glBindVertexArray(game->colladaVao);
     glBindTexture(GL_TEXTURE_2D, game->colladaTexId);
-    //glDrawElements(GL_TRIANGLES, game->colladaMeshNumVertex, GL_UNSIGNED_INT, 0);
-    glDrawArrays(GL_TRIANGLES, 0, game->colladaMeshNumVertex);
+    glDrawElements(GL_TRIANGLES, game->colladaMeshNumVertex, GL_UNSIGNED_INT, 0);
+    //glDrawArrays(GL_TRIANGLES, 0, game->colladaMeshNumVertex);
     /////////////////////////////////////////////////////////////////// 
     RenderRendererBuffer();
 }

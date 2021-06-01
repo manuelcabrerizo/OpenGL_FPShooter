@@ -229,7 +229,7 @@ bool LoadColladaFile(unsigned int* vao,
         glEnableVertexAttribArray(1);
         glEnableVertexAttribArray(2);
 
-        *numberVertices = vertexBufferTemp.size();
+        *numberVertices = vertexBufferTemp.size() / 8;
     }
    
     uint32_t texture1;

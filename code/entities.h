@@ -5,8 +5,8 @@
 #include "camera.h"
 #include "utility.h"
 
-#define GRAVITY 0.001
-#define JUMP_POWER 0.06
+#define GRAVITY 9.8
+#define JUMP_POWER 6.0
 
 struct Transform
 {
