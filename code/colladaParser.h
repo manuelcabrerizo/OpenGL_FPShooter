@@ -6,16 +6,25 @@
 // c and c++ libraries
 #include <vector>
 
-struct ReturnValues
+struct JointIDsAndWeights
 {
     std::vector<Vec3>  a;
     std::vector<IVec3> b;
 };
 
+struct VertexAndIndices
+{
+    std::vector<float> a;
+    std::vector<int>   b;
+    int offset;
+    int size;
+};
+
 std::vector<int> ParseStringIntVector(char* string);
 std::vector<float> ParseStringFloatVector(char* string);
 std::vector<char*> ParseStringStringVector(char* string);
-ReturnValues GetJointsIdsAndWeight(TiXmlElement* controllers);
+JointIDsAndWeights GetJointsIdsAndWeight(TiXmlElement* controllers);
+VertexAndIndices   GetVertexAndIndices(TiXmlElement* geometries);
 bool LoadColladaFile(unsigned int* vao,
                      unsigned int* textId,
                      int* numberVertices,

@@ -61,7 +61,7 @@ std::vector<char*> ParseStringStringVector(char* string)
 }
 
 
-ReturnValues GetJointsIdsAndWeight(TiXmlElement* controllers)
+JointIDsAndWeights GetJointsIdsAndWeight(TiXmlElement* controllers)
 {
     char* jointString;
     char* weightsString;
@@ -151,56 +151,13 @@ ReturnValues GetJointsIdsAndWeight(TiXmlElement* controllers)
         jointIDsResult.push_back(vec3JointsId);
         weightsResult.push_back(vec3Weight);
     }
-    ReturnValues result = {weightsResult, jointIDsResult};
+    JointIDsAndWeights result = {weightsResult, jointIDsResult};
     return result;
 }
 
-bool LoadColladaFile(unsigned int* vao,
-                     unsigned int* textId,
-                     int* numberVertices,
-                     const char* xmlFilePath,
-                     const char* textureFilePath,
-                     bool haveEBO)
-{
-    TiXmlDocument xmlDoc;
-    if(!xmlDoc.LoadFile(xmlFilePath))
-    {
-        return false;
-    }
-    TiXmlElement* pRoot = xmlDoc.RootElement();
-    TiXmlElement* geometries  = 0;
-    TiXmlElement* animations  = 0;
-    TiXmlElement* controllers = 0;
-    TiXmlElement* visualScene = 0;
 
-    for(TiXmlElement* e = pRoot->FirstChildElement();
-        e != NULL;
-        e = e->NextSiblingElement())
-    {
-        if(strcmp(e->Value(), "library_geometries") == 0)
-        {
-            geometries = e;
-        }
-        
-        if(strcmp(e->Value(), "library_animations") == 0)
-        {
-            animations = e;
-        }
-        if(strcmp(e->Value(), "library_controllers") == 0)
-        {
-            controllers = e;
-        }
-        if(strcmp(e->Value(), "library_visual_scenes") == 0)
-        {
-            visualScene = e;
-        }
-    }
-    
-    if(geometries == NULL)
-    {
-        return false;
-    }
- 
+VertexAndIndices   GetVertexAndIndices(TiXmlElement* geometries)
+{
     char* verticesString; 
     char* normalsString;
     char* textureString;
@@ -279,16 +236,69 @@ bool LoadColladaFile(unsigned int* vao,
         }
     }
 
+    VertexAndIndices result = {vertexBufferTemp, indices, offset, (int)vertices.size()};
+    return result;
+}
 
+
+bool LoadColladaFile(unsigned int* vao,
+                     unsigned int* textId,
+                     int* numberVertices,
+                     const char* xmlFilePath,
+                     const char* textureFilePath,
+                     bool haveEBO)
+{
+    TiXmlDocument xmlDoc;
+    if(!xmlDoc.LoadFile(xmlFilePath))
+    {
+        return false;
+    }
+    TiXmlElement* pRoot = xmlDoc.RootElement();
+    TiXmlElement* geometries  = 0;
+    TiXmlElement* animations  = 0;
+    TiXmlElement* controllers = 0;
+    TiXmlElement* visualScene = 0;
+
+    for(TiXmlElement* e = pRoot->FirstChildElement();
+        e != NULL;
+        e = e->NextSiblingElement())
+    {
+        if(strcmp(e->Value(), "library_geometries") == 0)
+        {
+            geometries = e;
+        }
+        
+        if(strcmp(e->Value(), "library_animations") == 0)
+        {
+            animations = e;
+        }
+        if(strcmp(e->Value(), "library_controllers") == 0)
+        {
+            controllers = e;
+        }
+        if(strcmp(e->Value(), "library_visual_scenes") == 0)
+        {
+            visualScene = e;
+        }
+    }
     
+    VertexAndIndices vertexAndIndex = GetVertexAndIndices(geometries);
+    std::vector<float> vertexBufferTemp = vertexAndIndex.a;
+    std::vector<int> indices = vertexAndIndex.b;
+    int offset = vertexAndIndex.offset;
+    int size = vertexAndIndex.size;
+
     if(haveEBO)
     {
+        JointIDsAndWeights jointIDsAndWeights = GetJointsIdsAndWeight(controllers);
+
         std::vector<int> indexBuffer;
         for(int i = 0; i < indices.size(); i += offset)
         {
             indexBuffer.push_back((indices[i]));
         }
-        int memoryToAllocate = (vertices.size() / 3) * 8;
+
+        int memoryToAllocate = (size / 3) * 8;
         float* vertexBuffer = (float*)malloc(memoryToAllocate * sizeof(float)); 
         int vertexIndex = 0;
         for(int i = 0; i < indexBuffer.size(); i++)
@@ -311,11 +321,21 @@ bool LoadColladaFile(unsigned int* vao,
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-        //
-        //glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, )
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
         glEnableVertexAttribArray(2);
+        unsigned int vbo1;
+        glGenBuffers(1, &vbo1);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo1);
+        glBufferData(GL_ARRAY_BUFFER, jointIDsAndWeights.b.size() * sizeof(IVec3), jointIDsAndWeights.b.data(), GL_STATIC_DRAW);
+        glVertexAttribIPointer(3, 3, GL_INT, sizeof(IVec3), (void*)(9 * sizeof(int)));
+        glEnableVertexAttribArray(3);
+        unsigned int vbo2;
+        glGenBuffers(1, &vbo2);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo2);
+        glBufferData(GL_ARRAY_BUFFER, jointIDsAndWeights.a.size() * sizeof(Vec3), jointIDsAndWeights.a.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vec3), (void*)(12 * sizeof(float)));
+        glEnableVertexAttribArray(4);
 
         unsigned int ebo;
         glGenBuffers(1, &ebo);
