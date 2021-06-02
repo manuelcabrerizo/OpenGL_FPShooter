@@ -8,8 +8,6 @@
 #include <string>
 #include <iostream>
 
-#include "animatedModel.h"
-
 std::vector<int> ParseStringIntVector(char* string)
 {
     char* pNext;
@@ -48,6 +46,8 @@ std::vector<float> ParseStringFloatVector(char* string)
     return vectorFloats;
 }
 
+
+
 std::vector<char*> ParseStringStringVector(char* string)
 {
     std::vector<char*> vectorStrings;
@@ -58,6 +58,101 @@ std::vector<char*> ParseStringStringVector(char* string)
         token = std::strtok(NULL, " ");
     }
     return vectorStrings;
+}
+
+
+ReturnValues GetJointsIdsAndWeight(TiXmlElement* controllers)
+{
+    char* jointString;
+    char* weightsString;
+    char* vcountString;
+    char* vString;
+    std::vector<char*> joints;
+    std::vector<float> weights;
+    std::vector<int> vcount;
+    std::vector<int> v;
+
+    for(TiXmlElement* e = controllers->FirstChildElement()->FirstChildElement()->FirstChildElement();
+        e != NULL;
+        e = e->NextSiblingElement())
+    {
+        if(e->Attribute("id") != NULL)
+        {
+            if(strcmp(e->Attribute("id"), "Armature_Cube-skin-joints") == 0)
+            {
+                jointString = (char*)e->FirstChildElement()->GetText();
+            }
+            if(strcmp(e->Attribute("id"), "Armature_Cube-skin-weights") == 0)
+            {
+                weightsString = (char*)e->FirstChildElement()->GetText();
+            }
+        }
+
+        if(strcmp(e->Value(), "vertex_weights") == 0)
+        {
+            for(TiXmlElement* v = e->FirstChildElement();
+                v != NULL;
+                v = v->NextSiblingElement())
+            {
+                if(strcmp(v->Value(), "vcount") == 0)
+                {
+                    vcountString = (char*)v->GetText();
+                }
+                if(strcmp(v->Value(), "v") == 0)
+                {
+                    vString = (char*)v->GetText(); 
+                }
+            }
+        }
+    }
+    joints  = ParseStringStringVector(jointString);
+    weights = ParseStringFloatVector(weightsString);
+    vcount  = ParseStringIntVector(vcountString);
+    v       = ParseStringIntVector(vString);
+    
+
+    std::vector<IVec3> jointIDsResult;
+    std::vector<Vec3> weightsResult;
+    int index = 0;
+    for(int i = 0; i < vcount.size(); i++)
+    {
+        int offset = index + (vcount[i] * 2);
+        std::vector<float> actualWeight;
+        std::vector<int> actualJointID;
+        while(index < offset)
+        {
+            actualJointID.push_back(v[index]);
+            actualWeight.push_back(weights[v[index + 1]]);
+            index += 2;
+        }
+        Vec3  vec3Weight = {};
+        IVec3 vec3JointsId = {};
+        if(vcount[i] >= 3)
+        {
+            vec3Weight.x   = actualWeight[0]; 
+            vec3Weight.y   = actualWeight[1];
+            vec3Weight.z   = actualWeight[2];
+            vec3JointsId.x = actualJointID[0];
+            vec3JointsId.y = actualJointID[1]; 
+            vec3JointsId.z = actualJointID[2];
+        }
+        if(vcount[i] == 2)
+        {
+            vec3Weight.x   = actualWeight[0]; 
+            vec3Weight.y   = actualWeight[1];
+            vec3JointsId.x = actualJointID[0];
+            vec3JointsId.y = actualJointID[1]; 
+        }
+        if(vcount[i] == 1)
+        {
+            vec3Weight.x   = actualWeight[0]; 
+            vec3JointsId.x = actualJointID[0];
+        }
+        jointIDsResult.push_back(vec3JointsId);
+        weightsResult.push_back(vec3Weight);
+    }
+    ReturnValues result = {weightsResult, jointIDsResult};
+    return result;
 }
 
 bool LoadColladaFile(unsigned int* vao,
@@ -185,94 +280,7 @@ bool LoadColladaFile(unsigned int* vao,
     }
 
 
-    char* jointString;
-    char* weightsString;
-    char* vcountString;
-    char* vString;
-    std::vector<char*> joints;
-    std::vector<float> weights;
-    std::vector<int> vcount;
-    std::vector<int> v;
-
-    for(TiXmlElement* e = controllers->FirstChildElement()->FirstChildElement()->FirstChildElement();
-        e != NULL;
-        e = e->NextSiblingElement())
-    {
-        if(e->Attribute("id") != NULL)
-        {
-            if(strcmp(e->Attribute("id"), "Armature_Cube-skin-joints") == 0)
-            {
-                jointString = (char*)e->FirstChildElement()->GetText();
-            }
-            if(strcmp(e->Attribute("id"), "Armature_Cube-skin-weights") == 0)
-            {
-                weightsString = (char*)e->FirstChildElement()->GetText();
-            }
-        }
-
-        if(strcmp(e->Value(), "vertex_weights") == 0)
-        {
-            for(TiXmlElement* v = e->FirstChildElement();
-                v != NULL;
-                v = v->NextSiblingElement())
-            {
-                if(strcmp(v->Value(), "vcount") == 0)
-                {
-                    vcountString = (char*)v->GetText();
-                }
-                if(strcmp(v->Value(), "v") == 0)
-                {
-                    vString = (char*)v->GetText(); 
-                }
-            }
-        }
-    }
-    joints  = ParseStringStringVector(jointString);
-    weights = ParseStringFloatVector(weightsString);
-    vcount  = ParseStringIntVector(vcountString);
-    v       = ParseStringIntVector(vString);
-
-    AnimatedModel am;
     
-    int index = 0;
-    for(int i = 0; i < vcount.size(); i++)
-    {
-        int offset = index + (vcount[i] * 2);
-        std::vector<float> actualWeight;
-        std::vector<int> actualJointID;
-        while(index < offset)
-        {
-            actualJointID.push_back(v[index]);
-            actualWeight.push_back(weights[v[index + 1]]);
-            index += 2;
-        }
-        Vec3  vec3Weight = {};
-        IVec3 vec3JointsId = {};
-        if(vcount[i] >= 3)
-        {
-            vec3Weight.x   = actualWeight[0]; 
-            vec3Weight.y   = actualWeight[1];
-            vec3Weight.z   = actualWeight[2];
-            vec3JointsId.x = actualJointID[0];
-            vec3JointsId.y = actualJointID[1]; 
-            vec3JointsId.z = actualJointID[2];
-        }
-        if(vcount[i] == 2)
-        {
-            vec3Weight.x   = actualWeight[0]; 
-            vec3Weight.y   = actualWeight[1];
-            vec3JointsId.x = actualJointID[0];
-            vec3JointsId.y = actualJointID[1]; 
-        }
-        if(vcount[i] == 1)
-        {
-            vec3Weight.x   = actualWeight[0]; 
-            vec3JointsId.x = actualJointID[0];
-        }
-        am.jointIDs.push_back(vec3JointsId);
-        am.weights.push_back(vec3Weight);
-    }
-
     if(haveEBO)
     {
         std::vector<int> indexBuffer;
@@ -303,6 +311,8 @@ bool LoadColladaFile(unsigned int* vao,
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        //
+        //glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, )
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
         glEnableVertexAttribArray(2);
