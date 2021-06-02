@@ -13,6 +13,11 @@ struct Vec3
     float x, y, z;
 };
 
+struct IVec3
+{
+    int x, y, z;
+};
+
 struct Matrix
 {
     float m[4][4];
@@ -33,6 +38,9 @@ struct Quaternion
 Quaternion QuaternionRotationAxis(Vec3 axis, float angle);
 Matrix GetQuaternionRotationMatrix(Quaternion q);
 Quaternion GetQuaternionFromMatrix(Matrix m);
+float quaternion_length(Quaternion v);
+Quaternion normaliza_quaternion(Quaternion q);
+Quaternion QuaternionInterpolate(Quaternion a, Quaternion b, float blend);
 
 float to_radiant(float v);
 float absf(float f);

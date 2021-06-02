@@ -33,6 +33,45 @@ Quaternion GetQuaternionFromMatrix(Matrix m)
     return result;
 }
 
+float quaternion_length(Quaternion v)
+{
+    return sqrt(pow(v.w, 2) + pow(v.x, 2) + pow(v.y, 2) + pow(v.z, 2));
+}
+
+Quaternion normaliza_quaternion(Quaternion q)
+{
+    Quaternion result;
+    float lenght = quaternion_length(q);
+    result.w = q.w / lenght;
+    result.x = q.x / lenght;
+    result.y = q.y / lenght;
+    result.z = q.z / lenght;
+    return result;
+}
+
+Quaternion QuaternionInterpolate(Quaternion a, Quaternion b, float blend)
+{
+    Quaternion result = {0.0f, 0.0f, 0.0f, 1.0f};
+    float dot = a.w*b.w + a.x*b.x + a.y*b.y + a.z*b.z;
+    float blendI = 1.0f - blend;
+    if(dot < 0.0f)
+    {
+        result.w = blendI * a.w + blend * -b.w;
+        result.x = blendI * a.x + blend * -b.x;
+        result.y = blendI * a.y + blend * -b.y;
+        result.z = blendI * a.z + blend * -b.z;
+    }
+    else
+    {
+        result.w = blendI * a.w + blend * b.w;
+        result.x = blendI * a.x + blend * b.x;
+        result.y = blendI * a.y + blend * b.y;
+        result.z = blendI * a.z + blend * b.z;
+    }
+    result = normaliza_quaternion(result);
+    return result;
+}
+
 float to_radiant(float v)
 {
     return v * PI / 180.0f;

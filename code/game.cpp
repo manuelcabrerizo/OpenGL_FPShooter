@@ -26,8 +26,8 @@ void GameInit(MainGame* game)
     LoadColladaFile(&game->colladaVao,
                     &game->colladaTexId,
                     &game->colladaMeshNumVertex,
-                    "./data/naruto1.dae",
-                    "./data/naruto.bmp",
+                    "./data/model.dae",
+                    "./data/cowboy.bmp",
                     true);
 
     #include "constants.h"
@@ -94,8 +94,7 @@ void GameInit(MainGame* game)
             adj.m[1][0], adj.m[1][1], adj.m[1][2], adj.m[1][3],
             adj.m[2][0], adj.m[2][1], adj.m[2][2], adj.m[2][3],
             adj.m[3][0], adj.m[3][1], adj.m[3][2], adj.m[3][3]);
-    OutputDebugString(buffer);
-
+    //OutputDebugString(buffer);
 }
 
 void GameUnpdateAndRender(MainGame* game, float deltaTime)
@@ -131,10 +130,9 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glDepthMask(GL_TRUE);  
 
-
     // PRIMER::PRUEVA::DE::MODELO::CARGADO::CON::COLLADA::FILE::TYPE...
     UseShader(&game->mesh_shader);
-    SetShaderMatrix(get_scale_matrix({0.02f, 0.02f, 0.02f})   *
+    SetShaderMatrix(get_scale_matrix({1.0f, 1.0f, 1.0f})   *
                     get_rotation_x_matrix(to_radiant(-90.0f)) *
                     get_rotation_y_matrix(to_radiant(180.0f)) *
                     get_translation_matrix({0.0f, 4.0f, 0.0f}),

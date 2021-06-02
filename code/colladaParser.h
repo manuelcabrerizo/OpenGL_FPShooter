@@ -5,8 +5,11 @@
 // c and c++ libraries
 #include <vector>
 
+
+
 std::vector<int> ParseStringIntVector(char* string);
 std::vector<float> ParseStringFloatVector(char* string);
+std::vector<char*> ParseStringStringVector(char* string);
 bool LoadColladaFile(unsigned int* vao,
                      unsigned int* textId,
                      int* numberVertices,

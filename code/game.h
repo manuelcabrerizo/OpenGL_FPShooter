@@ -6,6 +6,7 @@
 #include "input.h"
 #include "line.h"
 #include "player.h"
+#include "animatedModel.h"
 
 #define global_variable static
 #define WNDWIDTH 800
