@@ -148,6 +148,7 @@ JointIDsAndWeights GetJointsIdsAndWeight(TiXmlElement* controllers)
             vec3Weight.x   = actualWeight[0]; 
             vec3JointsId.x = actualJointID[0];
         }
+        vec3Weight = normaliza_vec3(vec3Weight);
         jointIDsResult.push_back(vec3JointsId);
         weightsResult.push_back(vec3Weight);
     }
@@ -240,6 +241,68 @@ VertexAndIndices   GetVertexAndIndices(TiXmlElement* geometries)
     return result;
 }
 
+Matrix ParseMatrixFromColladaFile(TiXmlElement* e)
+{
+    Matrix result = {};
+    char* matrixString = (char*)e->GetText();
+    std::vector<float> matrixArray = ParseStringFloatVector(matrixString);
+    for(int y = 0; y < 4; y++)
+    {
+        for(int x = 0; x < 4; x++)
+        {
+            result.m[y][x] = matrixArray[(y * 4) + x];
+        }
+    }
+    return result;
+}
+
+void GetNodeTransforMatrix(TiXmlElement* e, Joint* joint, int* jointIndex)
+{
+    joint->name = e->Attribute("id");
+    joint->index = jointIndex;
+    for(TiXmlElement* node = e->FirstChildElement();
+        node != NULL;
+        node = node->NextSiblingElement())
+    {
+        if(strcmp(node->Value(), "matrix") == 0)
+        {
+            joint->localBindTransform = ParseMatrixFromColladaFile(node);
+        }
+        if(strcmp(node->Value(), "node") == 0)
+        {
+            Joint jointChild = {};
+            joint->children.push_back(jointChild);
+            *jointIndex++;
+            GetNodeTransforMatrix(node, &joint->children.back(), jointIndex);
+        }
+    } 
+}
+
+Joint GetJointsStructure(TiXmlElement* visualScene)
+{
+    Joint result = {};
+    for(TiXmlElement* e = visualScene->FirstChildElement()->FirstChildElement();
+        e != NULL;
+        e = e->NextSiblingElement())
+    {
+        if(e->Attribute("id") != NULL)
+        {
+            if(strcmp(e->Attribute("id"), "Armature") == 0)
+            {
+                for(TiXmlElement* node0 = e->FirstChildElement();
+                    node0 != NULL;
+                    node0 = node0->NextSiblingElement())
+                {
+                    if(strcmp(node0->Value(), "node") == 0)
+                    {
+                        GetNodeTransforMatrix(node0, &result, 0);
+                    }
+                }
+            }
+        }
+    }
+    return result;
+}
 
 bool LoadColladaFile(unsigned int* vao,
                      unsigned int* textId,
@@ -281,7 +344,7 @@ bool LoadColladaFile(unsigned int* vao,
             visualScene = e;
         }
     }
-    
+    Joint joint = GetJointsStructure(visualScene); 
     VertexAndIndices vertexAndIndex = GetVertexAndIndices(geometries);
     std::vector<float> vertexBufferTemp = vertexAndIndex.a;
     std::vector<int> indices = vertexAndIndex.b;
@@ -328,15 +391,14 @@ bool LoadColladaFile(unsigned int* vao,
         glGenBuffers(1, &vbo1);
         glBindBuffer(GL_ARRAY_BUFFER, vbo1);
         glBufferData(GL_ARRAY_BUFFER, jointIDsAndWeights.b.size() * sizeof(IVec3), jointIDsAndWeights.b.data(), GL_STATIC_DRAW);
-        glVertexAttribIPointer(3, 3, GL_INT, sizeof(IVec3), (void*)(9 * sizeof(int)));
+        glVertexAttribIPointer(3, 3, GL_INT, sizeof(IVec3), (void*)0);
         glEnableVertexAttribArray(3);
         unsigned int vbo2;
         glGenBuffers(1, &vbo2);
         glBindBuffer(GL_ARRAY_BUFFER, vbo2);
         glBufferData(GL_ARRAY_BUFFER, jointIDsAndWeights.a.size() * sizeof(Vec3), jointIDsAndWeights.a.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vec3), (void*)(12 * sizeof(float)));
+        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vec3), (void*)0);
         glEnableVertexAttribArray(4);
-
         unsigned int ebo;
         glGenBuffers(1, &ebo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);

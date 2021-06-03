@@ -3,6 +3,7 @@
 
 #include "tinyxml.h"
 #include "math.h"
+#include "animatedModel.h"
 // c and c++ libraries
 #include <vector>
 
@@ -25,6 +26,7 @@ std::vector<float> ParseStringFloatVector(char* string);
 std::vector<char*> ParseStringStringVector(char* string);
 JointIDsAndWeights GetJointsIdsAndWeight(TiXmlElement* controllers);
 VertexAndIndices   GetVertexAndIndices(TiXmlElement* geometries);
+Joint GetJointsStructure(TiXmlElement* visualScene);
 bool LoadColladaFile(unsigned int* vao,
                      unsigned int* textId,
                      int* numberVertices,
