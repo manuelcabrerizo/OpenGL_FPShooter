@@ -1,16 +1,7 @@
 #include "animatedModel.h"
-
-void InitJoint(Joint* joint, int index, std::string name, Matrix localBindTransform)
-{
-    joint->index = index;
-    joint->name = name;
-    joint->localBindTransform = localBindTransform;
-}
-
-void AddJointChild(Joint* joint, Joint children)
-{
-    joint->children.push_back(children);
-}
+// temps...
+#include <stdio.h>
+#include <windows.h>
 
 void CalcInverseBindTransform(Joint* joint, Matrix parentBindTransform)
 {
@@ -22,23 +13,52 @@ void CalcInverseBindTransform(Joint* joint, Matrix parentBindTransform)
     }
 }
 
+
+void ShowJointStruct(Joint* joit)
+{
+    char buffer[255];
+    sprintf(buffer, "%s\n", joit->name.c_str());
+    OutputDebugString(buffer);
+    sprintf(buffer, "Index: %d\n", joit->index);
+    OutputDebugString(buffer);
+    for(int y = 0; y < 4; y++)
+    {
+        for(int x = 0; x < 4; x++)
+        {
+            sprintf(buffer, "%f ", joit->localBindTransform.m[y][x]);
+            OutputDebugString(buffer);
+        }
+        OutputDebugString("\n");
+    }
+    OutputDebugString("inversMatrix\n");
+    for(int y = 0; y < 4; y++)
+    {
+        for(int x = 0; x < 4; x++)
+        {
+            sprintf(buffer, "%f ", joit->inverseBindTransform.m[y][x]);
+            OutputDebugString(buffer);
+        }
+        OutputDebugString("\n");
+    }
+    OutputDebugString("\n");
+    for(int i = 0; i < joit->children.size(); i++)
+    {
+         ShowJointStruct(&joit->children[i]);
+    }   
+}
+
 void InitAnimatedModel(AnimatedModel* animatedModel,
                        unsigned int vao,
-                       unsigned int textId,
-                       Joint rootJoint,
-                       int jointCount)
+                       unsigned int textId)
 {
     animatedModel->vao = vao;
     animatedModel->textId = textId;
-    animatedModel->rootJoint = rootJoint;
-    animatedModel->jointCount = jointCount;
-    //TODO(Manuto): initialize Animator
     CalcInverseBindTransform(&animatedModel->rootJoint, get_identity_matrix());
 }
 
 void AddJointsToArray(Joint* headJoint, Matrix* jointMatrices)
 {
-    jointMatrices[headJoint->index] = headJoint->animatedTransform;
+    jointMatrices[headJoint->index] = matrix_transpose(headJoint->animatedTransform);
     for(int i = 0; i < headJoint->children.size(); i++)
     {
         AddJointsToArray(&headJoint->children[i], jointMatrices);
@@ -46,9 +66,24 @@ void AddJointsToArray(Joint* headJoint, Matrix* jointMatrices)
 }
 
 // Esta fuincion ALLOCA MEMORIA remover luego de usar!!!...
-Matrix* GetJointTransforms(AnimatedModel* animatedModel)
+float* GetJointTransforms(AnimatedModel* animatedModel)
 {
     Matrix* jointMatrices = (Matrix*)malloc(animatedModel->jointCount * sizeof(Matrix));
-    AddJointsToArray(&animatedModel->rootJoint, jointMatrices);
-    return jointMatrices;      
+    AddJointsToArray(&animatedModel->rootJoint, jointMatrices); 
+    float* poseMatrices = (float*)malloc(256 * sizeof(float)); 
+    for(int j = 0; j < 16; j++)
+    {
+        for(int y = 0; y < 4; y++)
+        {
+            for(int x = 0; x < 4; x++)
+            {
+                poseMatrices[(y*4)+x + j*16] = jointMatrices[j].m[y][x];
+            }
+        }
+    }
+    free(jointMatrices);
+    return poseMatrices;      
 }
+
+
+

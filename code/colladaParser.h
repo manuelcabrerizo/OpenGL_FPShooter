@@ -4,6 +4,7 @@
 #include "tinyxml.h"
 #include "math.h"
 #include "animatedModel.h"
+#include "animation.h"
 // c and c++ libraries
 #include <vector>
 
@@ -29,6 +30,9 @@ VertexAndIndices   GetVertexAndIndices(TiXmlElement* geometries);
 Joint GetJointsStructure(TiXmlElement* visualScene);
 bool LoadColladaFile(unsigned int* vao,
                      unsigned int* textId,
+                     Animation* animation,
+                     Joint* jointStruct,
+                     int* jointCount,
                      int* numberVertices,
                      const char* xmlFilePath,
                      const char* textureFilePath,

@@ -20,12 +20,10 @@ Matrix GetJointTrasformLocalMatrix(JointTransform* jointTransform);
 JointTransform InterpolateJointTransform(JointTransform frameA,
                                          JointTransform frameB,
                                          float progression);
-
-
 struct KeyFrame
 {
     float timeStamp;
-    std::map<std::string, JointTransform> pose;
+    std::map<int, JointTransform> pose;
 
 };
 
@@ -35,8 +33,7 @@ struct Animation
     std::vector<KeyFrame> keyFrames;
 };
 
-void InitAnimation(Animation* animation,
-                   float length,
-                   std::vector<KeyFrame> keyFrames);
+void ShowAnimationStruct(Animation* animation);
+float* GetAnimatedModelPose(Animation* animation, int index);
 
 #endif

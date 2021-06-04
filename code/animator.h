@@ -13,5 +13,12 @@ struct Animator
 
 void InitAnimator(Animator* animator,
                   AnimatedModel* entity);
+void DoAnimation(Animator* animator, Animation* animation);
+void AnimatorUpdate(Animator* animator, float deltaTime);
+std::map<int, Matrix> CalculateCurrentAnimationPose(Animator* animator);
+void GetPreviousAndNextKeyFrames(Animator* animator, KeyFrame* frames);
+float CalculateProgression(Animator* animator, KeyFrame frame0, KeyFrame frame1);
+std::map<int, Matrix> InterpolatePoses(KeyFrame frame0, KeyFrame frame1, float progression);
+void ApplayPoseToJoints(std::map<int, Matrix> currentPos, Joint* joint, Matrix parentTransform);
 
 #endif

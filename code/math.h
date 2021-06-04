@@ -41,6 +41,8 @@ Quaternion GetQuaternionFromMatrix(Matrix m);
 float quaternion_length(Quaternion v);
 Quaternion normaliza_quaternion(Quaternion q);
 Quaternion QuaternionInterpolate(Quaternion a, Quaternion b, float blend);
+Matrix ToRotationMatrix(Quaternion q);
+Vec3 GetTranslationFromMatrix(Matrix m);
 
 float to_radiant(float v);
 float absf(float f);

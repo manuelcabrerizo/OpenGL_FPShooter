@@ -1,15 +1,30 @@
 #include "animation.h"
 #include "line.h"
 
-void InitAnimation(Animation* animation,
-                   float length,
-                   std::vector<KeyFrame> keyFrames)
+#include <stdio.h>
+#include <windows.h>
+
+float* GetAnimatedModelPose(Animation* animation, int index)
 {
-    animation->length = length;
-    for(int i = 0; i < keyFrames.size(); i++)
+    float* poseMatrices = (float*)malloc(256 * sizeof(float)); 
+    KeyFrame* actualFrame = &animation->keyFrames[index];
+    for(int j = 0; j < actualFrame->pose.size(); j++)
     {
-        animation->keyFrames.push_back(keyFrames[i]);
+            for(int y = 0; y < 4; y++)
+            {
+                for(int x = 0; x < 4; x++)
+                {
+                    //poseMatrices[(y*4)+x + j*16] = get_identity_matrix().m[y][x];
+                    poseMatrices[(y*4)+x + j*16] = GetJointTrasformLocalMatrix(&actualFrame->pose[j]).m[y][x];
+                }
+            }
+        //poseMatrices.push_back(GetJointTrasformLocalMatrix(&actualFrame->pose[j])); 
+        //poseMatrices.push_back(get_identity_matrix());        
     }
+    //char buffer[100];
+    //sprintf(buffer, "%d\n", (int)poseMatrices.size());
+    //OutputDebugString(buffer);
+    return poseMatrices;
 }
 
 void InitJointTransform(JointTransform* jointTransform,
@@ -22,9 +37,11 @@ void InitJointTransform(JointTransform* jointTransform,
 
 Matrix GetJointTrasformLocalMatrix(JointTransform* jointTransform)
 {
-    Matrix rotMat = GetQuaternionRotationMatrix(jointTransform->rotation);
-    Matrix posMat = get_translation_matrix(jointTransform->position);
-    return rotMat * posMat;
+    Matrix rotMat = ToRotationMatrix(jointTransform->rotation);
+    Matrix posMat = matrix_transpose(get_translation_matrix(jointTransform->position));
+    Matrix result = posMat * rotMat;
+    result = result;   
+    return result;
 }
 
 JointTransform InterpolateJointTransform(JointTransform frameA, JointTransform frameB, float progression)
@@ -34,4 +51,29 @@ JointTransform InterpolateJointTransform(JointTransform frameA, JointTransform f
     JointTransform result; 
     InitJointTransform(&result, pos, rot);
     return result; 
+}
+
+
+void ShowAnimationStruct(Animation* animation)
+{
+    for(int i = 0; i < animation->keyFrames.size(); i++)
+    {
+        KeyFrame* actualFrame = &animation->keyFrames[i];
+        for(int j = 0; j < actualFrame->pose.size(); j++)
+        {
+            char buffer[100];
+            sprintf(buffer, "index: %d\n", j);
+            OutputDebugString(buffer);
+            for(int y = 0; y < 4; y++)
+            {
+                for(int x = 0; x < 4; x++)
+                {
+                    sprintf(buffer, "%f ", GetJointTrasformLocalMatrix(&actualFrame->pose[j]).m[y][x]);
+                    OutputDebugString(buffer);
+                }
+                OutputDebugString("\n");
+            }
+            OutputDebugString("\n");
+        }
+    }
 }

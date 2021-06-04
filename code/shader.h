@@ -17,5 +17,6 @@ void LoadShader(Shader* shader,
 
 void UseShader(Shader* shader);
 void SetShaderMatrix(Matrix m, int matLoc);
+void SetShaderMatrixArray(float* m, int matLoc, int size);
 
 #endif

@@ -22,6 +22,37 @@ Matrix GetQuaternionRotationMatrix(Quaternion q)
     return result;
 }
 
+Matrix ToRotationMatrix(Quaternion q)
+{
+		Matrix matrix = {};
+		float xy = q.x * q.y;
+		float xz = q.x * q.z;
+		float xw = q.x * q.w;
+		float yz = q.y * q.z;
+		float yw = q.y * q.w;
+		float zw = q.z * q.w;
+		float xSquared = q.x * q.x;
+		float ySquared = q.y * q.y;
+		float zSquared = q.z * q.z;
+		matrix.m[0][0] = 1 - 2 * (ySquared + zSquared);
+		matrix.m[0][1] = 2 * (xy - zw);
+		matrix.m[0][2] = 2 * (xz + yw);
+		matrix.m[0][3] = 0;
+		matrix.m[1][0] = 2 * (xy + zw);
+		matrix.m[1][1] = 1 - 2 * (xSquared + zSquared);
+		matrix.m[1][2] = 2 * (yz - xw);
+		matrix.m[1][3] = 0;
+		matrix.m[2][0] = 2 * (xz - yw);
+		matrix.m[2][1] = 2 * (yz + xw);
+		matrix.m[2][2] = 1 - 2 * (xSquared + ySquared);
+		matrix.m[2][3] = 0;
+		matrix.m[3][0] = 0;
+		matrix.m[3][1] = 0;
+		matrix.m[3][2] = 0;
+		matrix.m[3][3] = 1;
+		return matrix;
+	}
+
 Quaternion GetQuaternionFromMatrix(Matrix m)
 {
     float angle = acosf(0.5f*(m.m[0][0]+m.m[1][1]+m.m[2][2]+m.m[3][3]-2.0f));
@@ -407,6 +438,15 @@ Matrix get_translation_matrix(Vec3 v)
     result = matrix_transpose(result);
     return result;
 }
+
+Vec3 GetTranslationFromMatrix(Matrix m)
+{
+    Vec3 result = {};
+    result.x = m.m[0][3];  
+    result.y = m.m[1][3];
+    result.z = m.m[2][3];
+    return result;
+};
 
 Matrix get_rotation_x_matrix(float angle)
 {

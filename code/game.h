@@ -6,7 +6,7 @@
 #include "input.h"
 #include "line.h"
 #include "player.h"
-#include "animatedModel.h"
+#include "animator.h"
 
 #define global_variable static
 #define WNDWIDTH 800
@@ -26,7 +26,8 @@ struct MainGame
 {
     Shader main_shader;
     Shader mesh_shader;
-    Shader skybox_shader; 
+    Shader skybox_shader;
+    Shader animate_shader; 
     UI ui; 
     Input input;
     
@@ -59,6 +60,10 @@ struct MainGame
     unsigned int colladaVao;
     unsigned int colladaTexId;
     int colladaMeshNumVertex;
+    AnimatedModel am;
+    Animation animation;
+    Animator animator;
+    float* matrixArray;
 };
 
 void GameInit(MainGame* game);

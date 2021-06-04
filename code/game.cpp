@@ -22,13 +22,27 @@ void GameInit(MainGame* game)
     LoadShader(&game->skybox_shader,
             "./code/SkyBoxVertexShader.vert",
             "./code/SkyBoxFragmentShader.frag");
- 
+    LoadShader(&game->animate_shader,
+            "./code/AnimateVertexShader.vert",
+            "./code/AnimateFragmentShader.frag");
     LoadColladaFile(&game->colladaVao,
                     &game->colladaTexId,
-                    &game->colladaMeshNumVertex,
+                    &game->animation,
+                    &game->am.rootJoint,
+                    &game->am.jointCount,
+                    &game->colladaMeshNumVertex, 
                     "./data/model.dae",
                     "./data/cowboy.bmp",
                     true);
+ 
+    InitAnimatedModel(&game->am, game->colladaVao, game->colladaTexId);
+    InitAnimator(&game->animator, &game->am);
+    DoAnimation(&game->animator, &game->animation);
+    //game->matrixArray = GetAnimatedModelPose(&game->animation, 1);
+
+    
+
+    
 
     #include "constants.h"
     for(int i = 0; i < 50*50; i++)
@@ -46,9 +60,12 @@ void GameInit(MainGame* game)
     SetShaderMatrix(proj, game->skybox_shader.projMatLoc);
     UseShader(&game->main_shader);
     SetShaderMatrix(proj, game->main_shader.projMatLoc);
+    UseShader(&game->animate_shader);
+    SetShaderMatrix(proj, game->animate_shader.projMatLoc);
     UseShader(&game->mesh_shader);
     SetShaderMatrix(proj, game->mesh_shader.projMatLoc);
-    
+  
+
     game->ui.xAxis = GenLine({-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 1.0f}, &game->ui.shader);
     game->ui.yAxis = GenLine({0.0f, -1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 1.0f}, &game->ui.shader);
     
@@ -74,27 +91,6 @@ void GameInit(MainGame* game)
     game->terrainModels[0] = &game->terrain.model;
     game->terrainShouldRender[0] = &game->terrain.shouldRender; 
     PushToRender(game->terrain.vao, game->terrain.texId, 1, game->terrain.numIndex, true, game->mesh_shader, game->terrainModels, game->terrainShouldRender); 
-    
-
-    Matrix mat = {{
-        { 3.0f,  1.0f,  0.0f, -2.0f},
-        {-2.0f, -4.0f,  3.0f,  5.0f},
-        { 5.0f,  4.0f, -2.0f,  9.0f},
-        { 0.0f,  1.0f,  7.0f, -1.0f}
-    }};
-
-    float det = det_4x4(mat);
-    char buffer[255];
-    sprintf(buffer, "result: %f\n", det);
-    OutputDebugString(buffer);
-
-    Matrix adj = get_inverse_matrix(mat);
-    sprintf(buffer, "%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n",
-            adj.m[0][0], adj.m[0][1], adj.m[0][2], adj.m[0][3],
-            adj.m[1][0], adj.m[1][1], adj.m[1][2], adj.m[1][3],
-            adj.m[2][0], adj.m[2][1], adj.m[2][2], adj.m[2][3],
-            adj.m[3][0], adj.m[3][1], adj.m[3][2], adj.m[3][3]);
-    //OutputDebugString(buffer);
 }
 
 void GameUnpdateAndRender(MainGame* game, float deltaTime)
@@ -106,9 +102,12 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     ProcessEnemyMovementAndCollition(game->enemy, 49, game->buildings, 4, &game->player.camera, deltaTime);
     ProcessPlayerProjectiles(&game->player, game->buildings, game->enemy, deltaTime);
     game->player.weapon.model = ProcessPlayerWeapon(&game->player.weapon, &game->player.camera, &game->input, deltaTime);
-    
+    AnimatorUpdate(&game->animator, deltaTime);
+
     UseShader(&game->mesh_shader);
     SetShaderMatrix(game->player.camera.viewMat, game->mesh_shader.viewMatLoc);
+    UseShader(&game->animate_shader);
+    SetShaderMatrix(game->player.camera.viewMat, game->animate_shader.viewMatLoc);
     UseShader(&game->main_shader);
     SetShaderMatrix(game->player.camera.viewMat, game->main_shader.viewMatLoc);
     // Render...   
@@ -129,20 +128,24 @@ void GameUnpdateAndRender(MainGame* game, float deltaTime)
     glBindTexture(GL_TEXTURE_CUBE_MAP, game->skyBox.textureID);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glDepthMask(GL_TRUE);  
+    
+    UseShader(&game->mesh_shader);
+    RenderRendererBuffer();
 
     // PRIMER::PRUEVA::DE::MODELO::CARGADO::CON::COLLADA::FILE::TYPE...
-    UseShader(&game->mesh_shader);
-    SetShaderMatrix(get_scale_matrix({1.0f, 1.0f, 1.0f})   *
-                    get_rotation_x_matrix(to_radiant(-90.0f)) *
-                    get_rotation_y_matrix(to_radiant(180.0f)) *
-                    get_translation_matrix({0.0f, 4.0f, 0.0f}),
+    UseShader(&game->animate_shader); 
+    game->matrixArray = GetJointTransforms(&game->am);    
+    unsigned int MatArrayLoc = glGetUniformLocation(game->animate_shader.id, "jointTransforms");
+    SetShaderMatrixArray(game->matrixArray, MatArrayLoc, 256); 
+    SetShaderMatrix(get_identity_matrix(),
                     game->mesh_shader.worldMatLoc);
-    glBindVertexArray(game->colladaVao);
-    glBindTexture(GL_TEXTURE_2D, game->colladaTexId);
-    glDrawElements(GL_TRIANGLES, game->colladaMeshNumVertex, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(game->am.vao);
+    glBindTexture(GL_TEXTURE_2D, game->am.textId);
     //glDrawArrays(GL_TRIANGLES, 0, game->colladaMeshNumVertex);
-    /////////////////////////////////////////////////////////////////// 
-    RenderRendererBuffer();
+    glDrawElements(GL_TRIANGLES, game->colladaMeshNumVertex, GL_UNSIGNED_INT, 0);
+    free(game->matrixArray);
+    ///////////////////////////////////////////////////////////////////
+
 }
 
 

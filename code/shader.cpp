@@ -86,6 +86,11 @@ void SetShaderMatrix(Matrix m, int matLoc)
     glUniformMatrix4fv(matLoc, 1, GL_FALSE, m.m[0]);
 }
 
+void SetShaderMatrixArray(float* m, int matLoc, int size)
+{
+    glUniform1fv(matLoc, size, m);
+}
+
 
 
 

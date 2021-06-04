@@ -142,11 +142,15 @@ JointIDsAndWeights GetJointsIdsAndWeight(TiXmlElement* controllers)
             vec3Weight.y   = actualWeight[1];
             vec3JointsId.x = actualJointID[0];
             vec3JointsId.y = actualJointID[1]; 
+            vec3JointsId.z = -1;
         }
         if(vcount[i] == 1)
         {
             vec3Weight.x   = actualWeight[0]; 
             vec3JointsId.x = actualJointID[0];
+            vec3JointsId.y = -1; 
+            vec3JointsId.z = -1;
+
         }
         vec3Weight = normaliza_vec3(vec3Weight);
         jointIDsResult.push_back(vec3JointsId);
@@ -259,7 +263,8 @@ Matrix ParseMatrixFromColladaFile(TiXmlElement* e)
 void GetNodeTransforMatrix(TiXmlElement* e, Joint* joint, int* jointIndex)
 {
     joint->name = e->Attribute("id");
-    joint->index = jointIndex;
+    joint->index = *jointIndex;
+    *jointIndex += 1;
     for(TiXmlElement* node = e->FirstChildElement();
         node != NULL;
         node = node->NextSiblingElement())
@@ -271,14 +276,13 @@ void GetNodeTransforMatrix(TiXmlElement* e, Joint* joint, int* jointIndex)
         if(strcmp(node->Value(), "node") == 0)
         {
             Joint jointChild = {};
-            joint->children.push_back(jointChild);
-            *jointIndex++;
+            joint->children.push_back(jointChild); 
             GetNodeTransforMatrix(node, &joint->children.back(), jointIndex);
         }
     } 
 }
 
-Joint GetJointsStructure(TiXmlElement* visualScene)
+Joint GetJointsStructure(TiXmlElement* visualScene, int* jointCount)
 {
     Joint result = {};
     for(TiXmlElement* e = visualScene->FirstChildElement()->FirstChildElement();
@@ -295,7 +299,9 @@ Joint GetJointsStructure(TiXmlElement* visualScene)
                 {
                     if(strcmp(node0->Value(), "node") == 0)
                     {
-                        GetNodeTransforMatrix(node0, &result, 0);
+                        int index = 0;
+                        GetNodeTransforMatrix(node0, &result, &index);
+                        *jointCount = index;
                     }
                 }
             }
@@ -304,8 +310,84 @@ Joint GetJointsStructure(TiXmlElement* visualScene)
     return result;
 }
 
+struct Return2Vectors
+{
+    std::vector<float> timeSteps;
+    std::vector<float> matrices;
+};
+
+Return2Vectors GetKeyFrame(TiXmlElement* animation)
+{
+    Return2Vectors result = {};
+    char* timeStepString = (char*)animation->FirstChildElement()->GetText();
+    char* matrixString = (char*)animation->NextSiblingElement()->FirstChildElement()->GetText();
+    result.timeSteps = ParseStringFloatVector(timeStepString);
+    result.matrices  = ParseStringFloatVector(matrixString);
+    return result;
+}
+
+void PrintMatrix(Matrix m)
+{
+    for(int y = 0; y < 4; y++)
+    {
+        for(int x = 0; x < 4; x++)
+        {
+            char buffer[100];
+            sprintf(buffer, "%f ", m.m[y][x]);
+            OutputDebugString(buffer);
+        }
+        OutputDebugString("\n");
+    }
+    OutputDebugString("\n");
+}
+
+
+Animation GetAnimationStruct(TiXmlElement* animations)
+{
+    Animation result = {}; 
+    std::vector<float> times;
+    std::vector<std::vector<float>> matrices;
+    int numberJoints = 0;
+    for(TiXmlElement* e = animations->FirstChildElement();
+        e != NULL;
+        e = e->NextSiblingElement())
+    {
+        Return2Vectors result = GetKeyFrame(e->FirstChildElement());
+        times = result.timeSteps;
+        matrices.push_back(result.matrices);
+    }
+    for(int i = 0; i < times.size(); i++)
+    {
+        KeyFrame keyFrame = {};
+        keyFrame.timeStamp = times[i];
+        result.length = times[i];
+        for(int j = 0; j < matrices.size(); j++)
+        {
+            Matrix actualMatrix = {};
+            for(int y = 0; y < 4; y++)
+            {
+                for(int x = 0; x < 4; x++)
+                {
+                    int offset = i * 16;
+                    actualMatrix.m[y][x] = matrices[j][(y*4)+x+offset];        
+                }
+            }
+            Quaternion actualQuaternion = GetQuaternionFromMatrix(actualMatrix);
+            Vec3 actualPositions = GetTranslationFromMatrix(actualMatrix); 
+            JointTransform jointTransform = {actualPositions, actualQuaternion};
+            keyFrame.pose.insert(std::pair<int, JointTransform>(j, jointTransform));
+        }
+        result.keyFrames.push_back(keyFrame);
+    }
+    //ShowAnimationStruct(&result);
+    return result;
+}
+
 bool LoadColladaFile(unsigned int* vao,
                      unsigned int* textId,
+                     Animation* animation,
+                     Joint* jointStruct,
+                     int* jointCount,
                      int* numberVertices,
                      const char* xmlFilePath,
                      const char* textureFilePath,
@@ -344,17 +426,19 @@ bool LoadColladaFile(unsigned int* vao,
             visualScene = e;
         }
     }
-    Joint joint = GetJointsStructure(visualScene); 
+    *jointStruct = GetJointsStructure(visualScene, jointCount);
+    *animation = GetAnimationStruct(animations);
+
     VertexAndIndices vertexAndIndex = GetVertexAndIndices(geometries);
     std::vector<float> vertexBufferTemp = vertexAndIndex.a;
     std::vector<int> indices = vertexAndIndex.b;
     int offset = vertexAndIndex.offset;
     int size = vertexAndIndex.size;
 
-    if(haveEBO)
-    {
-        JointIDsAndWeights jointIDsAndWeights = GetJointsIdsAndWeight(controllers);
+    JointIDsAndWeights jointIDsAndWeights = GetJointsIdsAndWeight(controllers);
 
+    if(haveEBO)
+    { 
         std::vector<int> indexBuffer;
         for(int i = 0; i < indices.size(); i += offset)
         {
@@ -422,6 +506,18 @@ bool LoadColladaFile(unsigned int* vao,
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
         glEnableVertexAttribArray(2);
+        unsigned int vbo1;
+        glGenBuffers(1, &vbo1);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo1);
+        glBufferData(GL_ARRAY_BUFFER, jointIDsAndWeights.b.size() * sizeof(IVec3), jointIDsAndWeights.b.data(), GL_STATIC_DRAW);
+        glVertexAttribIPointer(3, 3, GL_INT, sizeof(IVec3), (void*)0);
+        glEnableVertexAttribArray(3);
+        unsigned int vbo2;
+        glGenBuffers(1, &vbo2);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo2);
+        glBufferData(GL_ARRAY_BUFFER, jointIDsAndWeights.a.size() * sizeof(Vec3), jointIDsAndWeights.a.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vec3), (void*)0);
+        glEnableVertexAttribArray(4);
 
         *numberVertices = vertexBufferTemp.size() / 8;
     }

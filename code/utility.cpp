@@ -320,7 +320,7 @@ void GenerateTerrain(Terrain* terrain,
         {
             float height = GetHeightFromHeightMap(mapHeigt, numCols, numRows, x, y);
             Vec3 vertexPos = {(float)posX + (float)(x * cellSpacing),
-                             height,
+                             height - 20.0f,
                              (float)posZ + (float)(y * cellSpacing)};
             Vec2 texturePos;
             texturePos.x = x;// * (1.0f / numCellCols);

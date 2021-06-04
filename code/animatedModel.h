@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+
 struct Joint
 {
     int index;
@@ -18,33 +19,24 @@ struct Joint
     Matrix inverseBindTransform;
 };
 
-void InitJoint(Joint* joint, int index, std::string name, Matrix localBindTransform);
-void AddJointChild(Joint* joint, Joint children);
 void CalcInverseBindTransform(Joint* joint, Matrix parentBindTransform);
+void ShowJointStruct(Joint* joit);
+
 
 struct AnimatedModel
 {
-    float* vertexBuffer;
     unsigned int vao;
     unsigned int textId;
-    std::vector<IVec3> jointIDs;  
-    std::vector<Vec3> weights;
-
-
-
     Joint rootJoint;
     int jointCount;
-    //Animator animator;
 };
 
 void InitAnimatedModel(AnimatedModel* animatedModel,
                        unsigned int vao,
-                       unsigned int textId,
-                       Joint rootJoint,
-                       int jointCount);
+                       unsigned int textId);
 
 void AddJointsToArray(Joint* headJoint, Matrix* jointMatrices);
-Matrix* GetJointTransforms(AnimatedModel* animatedModel);
+float* GetJointTransforms(AnimatedModel* animatedModel);
 
 
 #endif
