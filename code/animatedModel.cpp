@@ -58,7 +58,7 @@ void InitAnimatedModel(AnimatedModel* animatedModel,
 
 void AddJointsToArray(Joint* headJoint, Matrix* jointMatrices)
 {
-    jointMatrices[headJoint->index] = matrix_transpose(headJoint->animatedTransform);
+    jointMatrices[headJoint->index] =  matrix_transpose(get_rotation_x_matrix(to_radiant(90.0f)) * headJoint->animatedTransform);
     for(int i = 0; i < headJoint->children.size(); i++)
     {
         AddJointsToArray(&headJoint->children[i], jointMatrices);

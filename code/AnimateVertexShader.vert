@@ -41,12 +41,12 @@ void main()
 		    vec4 posePosition = jointTransform * vec4(in_position, 1.0);
 		    totalLocalPos += posePosition * in_weights[i];
 		
-		    //vec4 worldNormal = jointTransform * vec4(in_normal, 0.0);
-		    //totalNormal += worldNormal * in_weights[i];
+		    vec4 worldNormal = jointTransform * vec4(in_normal, 0.0);
+		    totalNormal += worldNormal * in_weights[i];
         }
 	}
     
     gl_Position = Proj * View * World * totalLocalPos;
-    normal = in_normal.xyz;
+    normal = totalNormal.xyz;
     ourColor = aTextCoord;
 }  
